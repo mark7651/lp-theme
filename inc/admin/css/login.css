@@ -1,0 +1,63 @@
+::-webkit-scrollbar {
+  width: 4px;
+  height: 2px;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #8ab4f8;
+ cursor: pointer; 
+}
+::-webkit-scrollbar-track {
+  visibility: hidden;
+}
+body {
+  background: #23282d;
+}
+a, a:active, a:hover, .login #backtoblog a, .login #nav a {
+  color: #8ab4f8;
+}
+.login #backtoblog a:hover, .login #nav a:hover, .login h1 a:hover {
+  color: #3858e9;
+}
+.login form {
+  background: #191f25;
+  border: 1px solid #3c4043;
+}
+.login form .input, .login form input[type=checkbox], .login input[type=text] {
+  background-color: #464b4f;
+  color: #ffffff;
+}
+body.wp-core-ui .button-primary {
+  background: #3858e9;
+  border-color: #3858e9;
+}
+
+.login label {
+  color: #bbc8d4;
+}
+body.wp-core-ui .button-primary.focus, body.wp-core-ui .button-primary.hover, body.wp-core-ui .button-primary:focus, .wp-core-ui .button-primary:hover, body.wp-core-ui .button-secondary:hover, body.wp-core-ui .button.hover, body.wp-core-ui .button:hover {
+  background: #464b4f;
+  border-color: #464b4f;
+  color: #fff;
+}
+input[type=checkbox]:focus, input[type=color]:focus, input[type=date]:focus, input[type=datetime-local]:focus, input[type=datetime]:focus, input[type=email]:focus, input[type=month]:focus, input[type=number]:focus, input[type=password]:focus, input[type=radio]:focus, input[type=search]:focus, input[type=tel]:focus, input[type=text]:focus, input[type=time]:focus, input[type=url]:focus, input[type=week]:focus, select:focus, textarea:focus {
+  border-color: #3858e9;
+  box-shadow: 0 0 0 1px #3858e9;
+}
+body.wp-core-ui select {
+  border-color: #3c4043;
+    color: #ffffff;
+    background: #464b4f url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%202%201-7%207-7-7%202-1z%22%20fill%3D%22%23555%22%2F%3E%3C%2Fsvg%3E) no-repeat right 5px top 55%;
+}
+body.wp-core-ui .button, body.wp-core-ui .button-secondary{
+  background: #3857e9;
+  border-color: #3857e9;
+  color: #ffffff;
+}
+body.login #login_error, body.login .message, body.login .success {
+  color: #bbc8d4;
+  background-color: #191f25;
+}
+body #wp-auth-check-wrap #wp-auth-check {
+  background-color: #23282e;
+}

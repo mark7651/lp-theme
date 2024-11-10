@@ -1,0 +1,119 @@
+:root {
+  --primary: #FE5471;
+  --secondary: #FE5471;
+  --black: #232323;
+  --gray: #959697;
+  --gray-bg: #F7F6F5;
+  --blue: #219DF3;
+}
+
+.is-loading .loader {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading .loader {
+  animation: fadein .5s ease;
+  animation-iteration-count: 1;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.loaded .loader {
+  animation: fadeout .7s ease;
+  animation-iteration-count: 1;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.loader {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  background-color: var(--gray-bg);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes fadeout {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.loader__logo {
+  border-radius: 50%;
+  position: absolute;
+  width: 7rem;
+  height: 7rem
+}
+
+.loader__spinner {
+  position: absolute;
+  width: 7rem;
+  height: 7rem;
+  border: 2px solid var(--black);
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  border-radius: 50%;
+  -webkit-animation: cssload-spin 2.7s infinite linear;
+  animation: cssload-spin 2.7s infinite linear;
+  z-index: 1;
+  opacity: .7
+}
+
+@-webkit-keyframes cssload-spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg)
+  }
+}
+
+@keyframes cssload-spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg)
+  }
+}
+  
+  @-webkit-keyframes cssload-spin {
+  100% {
+  -webkit-transform:rotate(360deg);
+  transform:rotate(360deg)
+  }
+  }
+  
+  @keyframes cssload-spin {
+  100% {
+  -webkit-transform:rotate(360deg);
+  transform:rotate(360deg)
+  }
+  }
+  

@@ -1,0 +1,133 @@
+/*!
+Theme Name: lptheme
+Theme URI: https://lpunity.com/
+Author: lpunity.com
+Author URI: https://lpunity.com/
+Description: Clean Starter Theme
+Version: 6.0.0
+Tested up to: 8.0
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: LICENSE
+Text Domain: lptheme
+Tags: custom-background, custom-logo, custom-menu, featured-images, translation-ready
+
+This theme, like WordPress, is licensed under the GPL.
+Use it to make something cool, have fun, and share what you've learned.
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	@font-face {
+		font-family: 'Noah Head';
+		src: url('./fonts/NoahHead-Regular.woff2') format('woff2');
+		font-weight: 400;
+		font-style: normal;
+		font-display: swap;
+	}
+
+	@font-face {
+		font-family: 'Noah Head';
+		src: url('./fonts/NoahHead-Bold.woff2') format('woff2');
+		font-weight: 700;
+		font-style: normal;
+		font-display: swap;
+	}
+
+	.custom-scroll {
+		@apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-thumb-primary-subtle scrollbar-track-transparent overflow-y-scroll;
+	}
+
+	html {
+		@apply font-sans text-body antialiased select-none touch-pan-y custom-scroll;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+		font-kerning: none;
+		font-variant-ligatures: none;
+		height: -webkit-fill-available;
+	}
+
+	body {
+		@apply min-h-screen;
+		min-height: -webkit-fill-available;
+	}
+
+	html.lenis,
+	html.lenis body {
+		@apply h-auto;
+	}
+
+	html {
+		scroll-behavior: auto !important;
+	}
+	.lenis.lenis-smooth [data-lenis-prevent] {
+		@apply overscroll-contain;
+	}
+
+	.lenis.lenis-stopped,
+	.lenis.lenis-stopped body {
+		@apply overflow-hidden;
+	}
+
+	.lenis.lenis-scrolling iframe {
+		@apply pointer-events-none;
+	}
+
+	main {
+		@apply min-h-[50vh];
+	}
+
+	h6,
+	.h6,
+	h5,
+	.h5,
+	h4,
+	.h4,
+	h3,
+	.h3,
+	h2,
+	.h2,
+	h1,
+	.h1 {
+		@apply m-0;
+		font-size: inherit;
+		font-weight: inherit;
+		line-height: inherit;
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	p + p {
+		@apply mt-8;
+	}
+
+	picture {
+		@apply block overflow-clip;
+		contain: content;
+	}
+
+	img,
+	video {
+		@apply block h-auto w-full object-cover pointer-events-none select-none;
+	}
+
+	::selection {
+		@apply text-white bg-black;
+	}
+	main {
+		@apply pb-58 md:pb-0;
+	}
+	.full-screen {
+		@apply flex-center;
+		min-height: calc(100vh - 87px);
+	}
+	.flex-center {
+		@apply flex items-center justify-center;
+	}
+}
