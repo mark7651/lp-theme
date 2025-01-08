@@ -1,20 +1,32 @@
 module.exports = {
-	content: ['./**/*.php'],
+	content: ['./*.php', './inc/**/*.php', './templates/**/*.php', './**/*.php'],
+	safelist: [
+		'lenis',
+		'lenis-stopped',
+		'panel-show',
+		'panel-showed',
+		'modal-show',
+		'modal-showed',
+		'active',
+		'scrolled',
+		'rotate',
+		'loading',
+	],
 	plugins: [
 		require('tailwind-scrollbar')({
 			nocompatible: true,
 			preferredStrategy: 'pseudoelements',
 		}),
 	],
+	future: {
+		hoverOnlyWhenSupported: true,
+	},
 
 	theme: {
 		container: {
 			center: true,
 			padding: {
 				DEFAULT: '1rem', // 16px
-				lg: '2rem', // 32px
-				xl: '4rem', // 64px
-				xxl: '5rem', // 80px
 			},
 			screens: {
 				xs: '475px',

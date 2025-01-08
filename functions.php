@@ -79,28 +79,20 @@ if (! function_exists('lp_fonts_preload')) {
  * ------------------------------------------------------------------------------------------------
  */
 
-// files vertion
-if (! function_exists('lp_version')) {
+
+if (!function_exists('lp_version')) {
 	function lp_version()
 	{
-		if (!get_field('enable_cache', 'option')) return;
-		global $version;
-		$version = '?ver=' . mt_rand();
-		return $version;
-	}
-}
-
-if (! function_exists('lp_critical_css')) {
-	function lp_critical_css()
-	{
-
-		$critical_css = get_style(LP_STYLES . '/critical.css');
-
-		if ($critical_css != "") {
-			echo '<style>' . $critical_css . '</style>';
+		if (!get_field('enable_cache', 'option')) {
+			return '';
 		}
+
+		$version = defined('WP_DEBUG') && WP_DEBUG
+			? (string) mt_rand()
+			: wp_get_theme()->get('Version');
+
+		return '?ver=' . $version;
 	}
-	add_action('wp_head', 'lp_critical_css', 2);
 }
 
 if (! function_exists('lp_head_functions')) {
@@ -110,11 +102,17 @@ if (! function_exists('lp_head_functions')) {
 			lp_fonts_preload();
 		}
 
-		if (! get_field('enable_min_css', 'option')): ?>
-			<link rel="stylesheet" href="<?php echo esc_url(get_stylesheet_uri() . lp_version()); ?>">
-		<?php else: ?>
-			<link rel="stylesheet" href="<?php echo esc_url(LP_THEME_DIR . '/style.min.css' . lp_version()); ?>">
-<?php endif;
+		$stylesheet_url = get_field('enable_min_css', 'option')
+			? LP_THEME_DIR . '/style.min.css'
+			: get_stylesheet_uri();
+
+		$version = lp_version();
+		if ($version) {
+			$stylesheet_url .= $version;
+		}
+?>
+		<link rel="stylesheet" href="<?php echo esc_url($stylesheet_url); ?>">
+<?php
 	}
 	add_action('wp_head', 'lp_head_functions', 3);
 }
@@ -139,7 +137,7 @@ if (! function_exists('lp_enqueue_scripts')) {
 			wp_enqueue_script('jquery');
 		}
 
-		wp_enqueue_script('lp-script', LP_SCRIPTS . '/app.js', array(), lp_version(), true);
+		wp_enqueue_script('app-script', LP_SCRIPTS . '/app.js', array(), lp_version(), true);
 
 		wp_localize_script('lp-script', 'wp_ajax', array(
 			'ajax_url' => admin_url('admin-ajax.php'),
@@ -186,9 +184,11 @@ if (! function_exists('lp_defer_scripts')) {
 	function lp_defer_scripts($tag, $handle, $src)
 	{
 		$defer = array(
+			'app-script',
 			'fslightbox-js',
 			'slider-js',
-			'smooth-scrollbar-js'
+			'smooth-scrollbar-js',
+			'gsap-js'
 		);
 		if (in_array($handle, $defer)) {
 			return '<script src="' . $src . '" defer="defer"></script>' . "\n";
@@ -197,6 +197,7 @@ if (! function_exists('lp_defer_scripts')) {
 	}
 	add_filter('script_loader_tag', 'lp_defer_scripts', 10, 3);
 }
+
 
 
 /**
