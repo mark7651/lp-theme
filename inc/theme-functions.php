@@ -5,17 +5,12 @@
  * body classes
  * ------------------------------------------------------------------------------------------------
  */
-
-
 if (!function_exists('lp_body_class')) {
 	function lp_body_class($classes)
 	{
 
 		$classes[]  = '';
 
-		if (get_field('header_sticky', 'option')) {
-			$classes[]       = 'header-sticky';
-		}
 		if (get_field('preloader', 'option')) {
 			$classes[]       = 'is-loading';
 		}
@@ -149,6 +144,45 @@ if (! function_exists('closing_body_code')) {
 		add_action('wp_footer', 'closing_body_code', 10);
 	}
 }
+
+//
+// Allow ICO file uploads
+function allow_custom_mime_types($mimes)
+{
+	// Add ICO to the list of allowed mime types
+	$mimes['ico'] = array('image/x-icon', 'image/vnd.microsoft.icon');
+
+	// Debug: Log the current mime types
+	error_log('Current MIME types: ' . print_r($mimes, true));
+
+	return $mimes;
+}
+add_filter('upload_mimes', 'allow_custom_mime_types', 1, 1);
+
+// Additional filter for mime type checking
+function fix_mime_type_ico($data, $file, $filename, $mimes)
+{
+	$ext = pathinfo($filename, PATHINFO_EXTENSION);
+
+	if ($ext === 'ico') {
+		$data['ext'] = 'ico';
+		$data['type'] = 'image/x-icon';
+	}
+
+	return $data;
+}
+add_filter('wp_check_filetype_and_ext', 'fix_mime_type_ico', 10, 4);
+
+// For extra security validation
+function custom_upload_validation($file)
+{
+	if ($file['type'] == 'image/x-icon' || $file['type'] == 'image/vnd.microsoft.icon') {
+		$file['ext'] = 'ico';
+		$file['type'] = 'image/x-icon';
+	}
+	return $file;
+}
+add_filter('wp_handle_upload_prefilter', 'custom_upload_validation');
 
 
 /**
@@ -292,39 +326,10 @@ if (! function_exists('lp_header_main_nav')) {
 													?><?php printf(wp_kses(__('Создайте Ваше первое <a href="%s"><strong>меню навигации</strong></a>', 'lptheme'), 'default'), $menu_link) ?><?php
 																																																																																	}
 																																																																																		?></nav>
-		<button class="burger" aria-label="menu"><span></span><span></span><span></span></button>
+
 	<?php
 	}
 }
-
-
-/**
- * ------------------------------------------------------------------------------------------------
- * mobile menu
- * ------------------------------------------------------------------------------------------------
- */
-
-if (! function_exists('lp_mobile_menu')) {
-	add_action('wp_footer', 'lp_mobile_menu', 10);
-
-	function lp_mobile_menu()
-	{
-		if (!wp_is_mobile()) return;
-	?>
-		<?php if (has_nav_menu('mobile-menu')): ?>
-
-			<div class="sidebar-menu scrollbar">
-				<div class="widget-heading">
-					<div class="widget-title"><?php esc_html_e('Menu', 'lptheme'); ?></div>
-					<button class="widget-close"><?php esc_html_e('close', 'lptheme'); ?></button>
-				</div>
-				<?php wp_nav_menu(array('theme_location' => 'mobile-menu')); ?>
-			</div>
-
-		<?php endif; ?>
-	<?php }
-}
-
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -356,7 +361,7 @@ if (! function_exists('lp_tpl2id')) {
 	{
 		$pages = get_pages(array(
 			'meta_key' => '_wp_page_template',
-			'meta_value' => $tpl
+			'meta_value' => 'templates/' . $tpl . '.php',
 		));
 		foreach ($pages as $page) {
 			return $page->ID;
@@ -364,28 +369,6 @@ if (! function_exists('lp_tpl2id')) {
 	}
 }
 
-/**
- * ------------------------------------------------------------------------------------------------
- * Maintenance mode
- * ------------------------------------------------------------------------------------------------
- */
-
-if (! function_exists('lp_maintenance_mode')) {
-	function lp_maintenance_mode()
-	{
-		if (!get_field('enable_maintenance', 'option')) return;
-		if (!is_user_logged_in() && !is_admin() && !in_array($GLOBALS['pagenow'], array('wp-login.php'))) {
-
-			$period = 24 * HOUR_IN_SECONDS; // 24 hours
-
-			header('Retry-After: ' . $period);
-
-			include_once(LP_THEMEROOT . '/maintenance.php');
-			exit;
-		}
-	}
-	add_action('init', 'lp_maintenance_mode');
-}
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -462,7 +445,7 @@ if (! function_exists('lp_breadcrumbs')) {
 	{
 		if (!get_field('breadcrumbs', 'option')) return;
 
-		$text['home']     = translate_pll('Головна', 'Home');
+		$text['home']     = esc_html__('Home', 'lptheme');
 		$text['category'] = '%s';
 		$text['search']   = 'Результати пошуку: "%s"';
 		$text['tag']      = 'Записи з тегом "%s"';
@@ -471,7 +454,7 @@ if (! function_exists('lp_breadcrumbs')) {
 		$text['page']     = 'Сторінка %s';
 		$text['cpage']    = 'Коментарі сторінка %s';
 
-		$wrap_before    = '<nav class="breadcrumbs" itemscope itemtype="http://schema.org/BreadcrumbList">';
+		$wrap_before    = '<nav class="hidden gap-20 mb-40 font-medium breadcrumbs md:inline-flex text-slate-400 text-tag" itemscope itemtype="http://schema.org/BreadcrumbList">';
 		$wrap_after     = '</nav>';
 		$sep            = '<span class="breadcrumbs__separator"> / </span>';
 		$before         = '<span class="breadcrumbs__current">';
@@ -522,10 +505,18 @@ if (! function_exists('lp_breadcrumbs')) {
 				// Single Post Breadcrumb
 				if (get_post_type() != 'post') {
 					$post_type = get_post_type_object(get_post_type());
-					$position += 1;
-					if ($position > 1) echo $sep;
-					echo sprintf($link, get_post_type_archive_link($post_type->name), $post_type->labels->name, $position);
-					if ($show_current) echo $sep . $before . get_the_title() . $after;
+
+					// Only show post type archive link if it's publicly queryable and has archive
+					if ($post_type->publicly_queryable && $post_type->has_archive) {
+						$position += 1;
+						if ($position > 1) echo $sep;
+						echo sprintf($link, get_post_type_archive_link($post_type->name), $post_type->labels->name, $position);
+					}
+
+					if ($show_current) {
+						if ($position >= 1) echo $sep;
+						echo $before . get_the_title() . $after;
+					}
 				} else {
 					$cat = get_the_category();
 					if ($cat) {
@@ -581,7 +572,7 @@ if (! function_exists('lp_breadcrumbs')) {
 
 				// Display current taxonomy term
 				if ($show_current) {
-					echo $sep . $before . $taxonomy->name . $after;
+					echo $sep . $before .  __($taxonomy->name, 'lptheme') . $after;
 				} elseif ($show_last_sep) {
 					echo $sep;
 				}
@@ -617,14 +608,7 @@ if (!function_exists('lp_page_title')) {
 		$breadcrumbs = get_field('breadcrumbs', 'option');
 		$title = '';
 
-		//woocoomerce page
-		if (function_exists('is_woocoomerce') && is_woocommerce() || function_exists('is_shop') && is_shop()):
-			if (apply_filters('woocommerce_show_page_title', true)):
-				$title = woocommerce_page_title(false);
-			endif;
-
-		// Default Latest Posts page
-		elseif (is_home() && !is_singular('page')) :
+		if (is_home() && !is_singular('page')) :
 			$title = esc_html__('Blog', 'lptheme');
 
 		// Singular
@@ -719,7 +703,7 @@ if (!function_exists('lp_back_btn')) {
 	function lp_back_btn()
 	{
 	?>
-		<a href="javascript:history.go(-1)" class="lp-back-btn"><span><?php esc_html_e('Back', 'lptheme') ?></span></a>
+		<a href="javascript:history.go(-1)" class="back-btn"><span><?php esc_html_e('Back', 'lptheme') ?></span></a>
 	<?php
 	}
 }
@@ -828,344 +812,68 @@ if (!function_exists('lp_post_date')) {
 
 /**
  * ------------------------------------------------------------------------------------------------
- * Display entry meta
- * ------------------------------------------------------------------------------------------------
- */
-
-if (!function_exists('lp_entry_meta')) {
-	function lp_entry_meta()
-	{
-		if (apply_filters('lp_entry_meta', false)) {
-		?>
-			<footer class="entry-meta">
-				<?php if (is_user_logged_in()): ?>
-					<p><?php edit_post_link(esc_html__('Edit', 'lptheme'), '<span class="edit-link">', '</span>'); ?></p>
-				<?php endif; ?>
-			</footer>
-		<?php
-		}
-	}
-}
-
-
-/**
- * ------------------------------------------------------------------------------------------------
  * Display pagination of posts.
  * ------------------------------------------------------------------------------------------------
  */
 
-if (! function_exists('lp_paging_nav')) {
+if (!function_exists('lp_paging_nav')) {
 	function lp_paging_nav($max_num_pages = false)
 	{
-
-		$prev_icon = 'lp-pagination__arrow prev';
-		$next_icon = 'lp-pagination__arrow next';
-
 		if ($max_num_pages === false) {
 			global $wp_query;
 			$max_num_pages = $wp_query->max_num_pages;
 		}
 
-		$big = 999999999;
-		$links = paginate_links(array(
-			'base'      => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
-			'format'    => '?paged=%#%',
-			'current'   => max(1, get_query_var('paged')),
-			'total'     => $max_num_pages,
-			'prev_next' => true,
-			'prev_text' => '<i class="' . $prev_icon . '">←</i>',
-			'next_text' => '<i class="' . $next_icon . '">→</i>',
-			'end_size'  => 1,
-			'mid_size'  => 2,
-			'type'      => 'default',
-		));
+		$current_page = max(1, get_query_var('paged'));
 
-		if (!empty($links)): ?>
-			<div class="lp-pagination">
-				<?php echo wp_kses_post($links); ?>
+		if ($max_num_pages > 1) : ?>
+			<div class="flex items-center gap-8 mt-60">
+				<?php
+				// Previous button
+				if ($current_page > 1) : ?>
+					<a href="<?php echo esc_url(get_pagenum_link($current_page - 1)); ?>"
+						class="btn-outline aspect-square scale-x-[1]">
+						<svg class="w-4 h-4 rotate-180" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</a>
+				<?php endif;
+
+				// Page numbers
+				for ($i = 1; $i <= min(5, $max_num_pages); $i++) : ?>
+					<a href="<?php echo esc_url(get_pagenum_link($i)); ?>"
+						class="btn-outline aspect-square <?php echo $current_page === $i ? 'bg-primary/10 text-primary' : 'text-slate-900 hover:bg-slate-100'; ?>">
+						<?php echo $i; ?>
+					</a>
+				<?php endfor;
+
+				// Next button
+				if ($current_page < $max_num_pages) : ?>
+					<a href="<?php echo esc_url(get_pagenum_link($current_page + 1)); ?>"
+						class="btn-outline aspect-square">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</a>
+				<?php endif; ?>
 			</div>
-	<?php endif;
+<?php endif;
 	}
 }
-
 
 /**
  * ------------------------------------------------------------------------------------------------
- * Modified dates
+ * icons parts
  * ------------------------------------------------------------------------------------------------
  */
 
-function true_russian_date_forms($the_date = '')
+function icon($name, $selector = null)
 {
-	if (substr_count($the_date, '---') > 0) {
-		return str_replace('---', '', $the_date);
-	}
-	$replacements = array(
-		"Январь" => "января",
-		"Февраль" => "февраля",
-		"Март" => "марта",
-		"Апрель" => "апреля",
-		"Май" => "мая",
-		"Июнь" => "июня",
-		"Июль" => "июля",
-		"Август" => "августа",
-		"Сентябрь" => "сентября",
-		"Октябрь" => "октября",
-		"Ноябрь" => "ноября",
-		"Декабрь" => "декабря"
-	);
-	return strtr($the_date, $replacements);
-}
-add_filter('the_time', 'true_russian_date_forms');
-add_filter('get_the_time', 'true_russian_date_forms');
-add_filter('the_date', 'true_russian_date_forms');
-add_filter('get_the_date', 'true_russian_date_forms');
-add_filter('the_modified_time', 'true_russian_date_forms');
-add_filter('get_the_modified_date', 'true_russian_date_forms');
-add_filter('get_post_time', 'true_russian_date_forms');
-add_filter('get_comment_date', 'true_russian_date_forms');
-add_filter('get_date', 'true_russian_date_forms');
+	ob_start();
+	get_template_part('assets/icons/' . $name . '.svg');
+	$svg = ob_get_clean();
 
+	$svg = preg_replace('/^<svg /', '<svg class="' . $selector . '" ', $svg);
 
-/*-----------------------------------------------------------------------------------*/
-/* Social Share Buttons */
-/*-----------------------------------------------------------------------------------*/
-
-// posts share links
-if (! function_exists('lp_share_links')) {
-	function lp_share_links()
-	{
-
-		$page_url = get_permalink();
-		$page_title = get_the_title();
-
-		$links = array(
-			'facebook' => array(
-				'url'  => 'https://www.facebook.com/sharer/sharer.php?u=' . $page_url . '&t=' . $page_title,
-				'icon' => '<svg class="lp-svgsprite fb"><use xlink:href="' . LP_IMAGES . '/sprite.svg#facebook" /></svg>',
-			),
-			'twitter' => array(
-				'url'  => 'https://twitter.com/intent/tweet?text=' . $page_title . '&url=' . $page_url,
-				'icon' => '<svg class="lp-svgsprite twitter"><use xlink:href="' . LP_IMAGES . '/sprite.svg#twitter" /></svg>',
-			),
-			'linkedin' => array(
-				'url'  => 'https://www.linkedin.com/shareArticle?url=' . $page_url,
-				'icon' => '<svg class="lp-svgsprite linkedin"><use xlink:href="' . LP_IMAGES . '/sprite.svg#linkedin" /></svg>',
-			),
-			'vk' => array(
-				'url'  => 'http://vk.com/share.php?url=' . $page_url,
-				'icon' => '<svg class="lp-svgsprite vk"><use xlink:href="' . LP_IMAGES . '/sprite.svg#vk" /></svg>',
-			),
-			'telegram' => array(
-				'url'  => 'https://t.me/share/url?url=' . $page_url . '&text=' . $page_title,
-				'icon' => '<svg class="lp-svgsprite telegram"><use xlink:href="' . LP_IMAGES . '/sprite.svg#telegram" /></svg>',
-			),
-			'instagram' => array(
-				'url'  => 'https://instagram.com',
-				'icon' => '<svg class="lp-svgsprite instagram"><use xlink:href="' . LP_IMAGES . '/sprite.svg#instagram" /></svg>',
-			),
-			'email' => array(
-				'url'  => 'mailto:?subject=I%20wanted%20to%20share%20this%20post%20with%20you&body=' . $page_title . ' - ' . $page_url,
-				'icon' => '<svg class="lp-svgsprite email"><use xlink:href="' . LP_IMAGES . '/sprite.svg#email" /></svg>',
-			),
-
-			// 'whatsapp' => array(
-			// 	'url'  => 'https://api.whatsapp.com/send?text='. $page_url,
-			// 	'icon' => '<svg class="lp-svgsprite whatsapp"><use xlink:href="'. LP_IMAGES . '/sprite.svg#whatsapp" /></svg>',
-			// ),
-			// 'reddit' => array(
-			// 	'url'  => 'http://reddit.com/submit?url='. $page_url,
-			// 	'icon' => '<svg class="lp-svgsprite reddit"><use xlink:href="'. LP_IMAGES . '/sprite.svg#reddit" /></svg>',
-			// ),
-
-		);
-
-		$html = '<div class="share-container">
-	<button class="share-button">
-		<span class="share-icon"></span>
-		<span class="widget-close"></span>
-	</button>
-	<div class="share-container__icons"><ul class="social-sharing-links">';
-
-		foreach ($links as $key => $link) {
-			$html .= sprintf(
-				'<li><a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a></li>',
-				esc_url($link['url']),
-				$link['icon']
-			);
-		}
-
-		$html .= '</ul></div></div>';
-		return $html;
-	}
-}
-
-
-// website share links
-if (! function_exists('lp_website_share_links')) {
-	function lp_website_share_links()
-	{
-
-		$page_url = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . "{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
-		$page_title = get_the_title();
-
-		$links = array(
-			'facebook' => array(
-				'url'  => 'https://www.facebook.com/sharer/sharer.php?u=' . $page_url . '&t=' . $page_title,
-				'icon' => '<svg class="lp-svgsprite fb"><use xlink:href="' . LP_IMAGES . '/sprite.svg#facebook" /></svg>',
-			),
-			'twitter' => array(
-				'url'  => 'https://twitter.com/intent/tweet?text=' . $page_title . '&url=' . $page_url,
-				'icon' => '<svg class="lp-svgsprite twitter"><use xlink:href="' . LP_IMAGES . '/sprite.svg#twitter" /></svg>',
-			),
-			'linkedin' => array(
-				'url'  => 'https://www.linkedin.com/shareArticle?url=' . $page_url,
-				'icon' => '<svg class="lp-svgsprite linkedin"><use xlink:href="' . LP_IMAGES . '/sprite.svg#linkedin" /></svg>',
-			),
-			'vk' => array(
-				'url'  => 'http://vk.com/share.php?url=' . $page_url,
-				'icon' => '<svg class="lp-svgsprite vk"><use xlink:href="' . LP_IMAGES . '/sprite.svg#vk" /></svg>',
-			),
-			'telegram' => array(
-				'url'  => 'https://t.me/share/url?url=' . $page_url . '&text=' . $page_title,
-				'icon' => '<svg class="lp-svgsprite telegram"><use xlink:href="' . LP_IMAGES . '/sprite.svg#telegram" /></svg>',
-			),
-			'instagram' => array(
-				'url'  => 'https://instagram.com',
-				'icon' => '<svg class="lp-svgsprite instagram"><use xlink:href="' . LP_IMAGES . '/sprite.svg#instagram" /></svg>',
-			),
-			'email' => array(
-				'url'  => 'mailto:?subject=I%20wanted%20to%20share%20this%20post%20with%20you&body=' . $page_title . ' - ' . $page_url,
-				'icon' => '<svg class="lp-svgsprite email"><use xlink:href="' . LP_IMAGES . '/sprite.svg#email" /></svg>',
-			),
-
-			// 'whatsapp' => array(
-			// 	'url'  => 'https://api.whatsapp.com/send?text='. $page_url,
-			// 	'icon' => '<svg class="lp-svgsprite whatsapp"><use xlink:href="'. LP_IMAGES . '/sprite.svg#whatsapp" /></svg>',
-			// ),
-			// 'reddit' => array(
-			// 	'url'  => 'http://reddit.com/submit?url='. $page_url,
-			// 	'icon' => '<svg class="lp-svgsprite reddit"><use xlink:href="'. LP_IMAGES . '/sprite.svg#reddit" /></svg>',
-			// ),
-
-		);
-
-		$html = '<div class="share-container">
-	<button class="share-button">
-		<span class="share-icon"></span>
-		<span class="widget-close"></span>
-	</button>
-	<div class="share-container__icons"><ul class="social-sharing-links">';
-
-		foreach ($links as $key => $link) {
-			$html .= sprintf(
-				'<li><a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a></li>',
-				esc_url($link['url']),
-				$link['icon']
-			);
-		}
-
-		$html .= '</ul></div></div>';
-		return $html;
-	}
-}
-
-
-/*-----------------------------------------------------------------------------------*/
-/* Post Likes */
-/*-----------------------------------------------------------------------------------*/
-
-// add_action('admin_head', 'wp_pageviews_display_pageviews_style');
-// add_action('manage_posts_custom_column', 'wp_pageviews_display_pageviews_row', 10, 2);
-// add_filter('manage_pages_columns', 'wp_pageviews_display_pageviews');
-// add_filter('manage_posts_columns', 'wp_pageviews_display_pageviews');
-
-function wp_pageviews_display_pageviews_style()
-{ ?>
-	<style type="text/css">
-		.column-pv {
-			width: 60px;
-		}
-	</style>
-<?php
-}
-
-function wp_pageviews_display_pageviews($columns)
-{
-	$columns['pv'] = __('Like');
-
-	return $columns;
-}
-
-function wp_pageviews_display_pageviews_row($column_name, $post_id)
-{
-	if ($column_name != 'pv') return;
-	$pv = get_post_meta($post_id, 'my-post-likes', true);
-	echo $pv ? $pv : 0;
-}
-
-function update_like_count()
-{
-
-	$post_id = intval($_POST['post_id']);
-
-	if (filter_var($post_id, FILTER_VALIDATE_INT)) {
-
-		$article = get_post($post_id);
-		$output_count = 0;
-
-		if (!is_null($article)) {
-			$count = get_post_meta($post_id, 'my-post-likes', true);
-			if ($count == '') {
-				update_post_meta($post_id, 'my-post-likes', '1');
-				$output_count = 1;
-			} else {
-				$n = intval($count);
-				$n++;
-				update_post_meta($post_id, 'my-post-likes', $n);
-				$output_count = $n;
-			}
-		}
-	}
-
-	$output = $output_count;
-	echo json_encode($output);
-	exit();
-}
-
-add_action('wp_ajax_my_update_likes', 'update_like_count');
-add_action('wp_ajax_nopriv_my_update_likes', 'update_like_count');
-
-function remove_likes()
-{
-	$post_id = intval($_POST['post_id']);
-	if (filter_var($post_id, FILTER_VALIDATE_INT)) {
-		$article = get_post($post_id);
-		if (!is_null($article)) {
-			$count = get_post_meta($post_id, 'my-post-likes', true);
-			$n = intval($count);
-			$n--;
-			update_post_meta($post_id, 'my-post-likes', $n);
-			$output_count = $n;
-		}
-	}
-
-	$output = $output_count;
-	echo json_encode($output);
-	exit();
-}
-add_action('wp_ajax_my_remove_likes', 'remove_likes');
-add_action('wp_ajax_nopriv_my_remove_likes', 'remove_likes');
-
-function display_post_likes($post_id = null)
-{
-	$value = '';
-	if (is_null($post_id)) {
-		global $post;
-		$value = get_post_meta($post->ID, 'my-post-likes', true);
-	} else {
-		$value = get_post_meta($post_id, 'my-post-likes', true);
-	}
-
-	echo $value;
+	echo $svg;
 }
