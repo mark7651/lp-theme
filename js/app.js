@@ -996,7 +996,6 @@ function phoneMask() {
 	InputMask.prototype.setListeners = function () {
 		this.el.addEventListener('input', this.mask.bind(this), false)
 		this.el.addEventListener('focus', this.mask.bind(this), false)
-		this.el.addEventListener('blur', this.mask.bind(this), false)
 		this.el.addEventListener(
 			'click',
 			this.preventCursorBeforePrefix.bind(this),
