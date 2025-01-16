@@ -139,7 +139,7 @@ body.wp-admin #wpbody #wpadminbar *,body.wp-admin #wpfooter #wpadminbar *{color:
 body.wp-admin #wpbody table,body.wp-admin #wpfooter table{background-color:#191f25;border-color:#32373c}
 body.wp-admin #wpbody table p,body.wp-admin #wpfooter table p{color:#bbc8d4}
 body.wp-admin #wpbody table tr,body.wp-admin #wpfooter table tr{background-color:#23282e}
-body.wp-admin #wpbody table tr th,body.wp-admin #wpbody table tr td,body.wp-admin #wpfooter table tr th,body.wp-admin #wpfooter table tr td{background-color:transparent;color:#bbc8d4}
+body.wp-admin #wpbody table tr th,body.wp-admin #wpbody table:not(.calendar-table) tr td,body.wp-admin #wpfooter table tr th,body.wp-admin #wpfooter table tr td{background-color:transparent;color:#bbc8d4}
 body.wp-admin #wpbody table.widefat,body.wp-admin #wpfooter table.widefat{border-color:#32373c}
 body.wp-admin #wpbody table.widefat thead th,body.wp-admin #wpbody table.widefat thead td,body.wp-admin #wpbody table.widefat tfoot th,body.wp-admin #wpbody table.widefat tfoot td,body.wp-admin #wpfooter table.widefat thead th,body.wp-admin #wpfooter table.widefat thead td,body.wp-admin #wpfooter table.widefat tfoot th,body.wp-admin #wpfooter table.widefat tfoot td{border-top-color:#191f25;border-bottom-color:#23282d;color:#bbc8d4}
 body.wp-admin #wpbody table.widefat p,body.wp-admin #wpfooter table.widefat p{color:#bbc8d4}
@@ -894,6 +894,16 @@ body.wp-admin #wpt_settings_page legend{background-color:#191f25;border-color:#1
 :not(pre) > code[class*="language-"],pre[class*="language-"]{background:#32373b}
 body code[class*="language-"],pre[class*="language-"]{text-shadow:none}
 body .acftc-field-code .acftc-field__copy{filter:invert(1)}
+body.wp-admin .acf-gallery .acf-gallery-toolbar,body.wp-admin .acf-gallery .acf-gallery-attachments{border-top: #3c4043 solid 1px;
+  background: #32373b;}
+  body.wp-admin .acf-gallery {border: #3c4043 solid 1px;
+}
+body.wp-admin .acf-gallery .acf-gallery-side-info,body.wp-admin .acf-gallery .acf-gallery-side {
+  background: #23282e; border: #3c4043 solid 1px;
+}
+body.wp-admin .nav-menus-php .metabox-holder .accordion-section-title button.accordion-trigger {
+  color: inherit!important;
+}
 body .acf-field-object > .handle .row-options a.delete-field{color:#c86565}
 body .post-type-acf-field-group .acf-field-object.open .handle a{color:#8ab4f8!important}
 body .acftc-field-meta{height:40px}
