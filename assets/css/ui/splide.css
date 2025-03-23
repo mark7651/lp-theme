@@ -1,0 +1,135 @@
+@keyframes splide-loading {
+	0% {
+		transform: rotate(0);
+	}
+	to {
+		transform: rotate(1turn);
+	}
+}
+
+.splide {
+	@apply overflow-hidden;
+}
+
+.splide__track--draggable {
+	@apply select-none;
+}
+
+.splide__track--fade > .splide__list > .splide__slide {
+	@apply m-0 opacity-0 z-0;
+}
+
+.splide__track--fade > .splide__list > .splide__slide.is-active {
+	@apply opacity-100 z-10;
+}
+
+.splide__track--ttb > .splide__list {
+	@apply block;
+}
+
+.splide__container {
+	@apply box-border relative;
+}
+
+.splide__list {
+	@apply flex h-full m-0 p-0 backface-hidden;
+	will-change: transform;
+}
+
+.splide.is-initialized:not(.is-active) .splide__list {
+	@apply block;
+}
+
+.splide__pagination {
+	@apply flex flex-wrap items-center justify-center m-0 pointer-events-none;
+}
+
+.splide__pagination li {
+	@apply inline-block leading-none list-none m-0 pointer-events-auto;
+}
+
+.splide:not(.is-overflow) .splide__pagination {
+	@apply hidden;
+}
+
+.splide__progress__bar {
+	@apply w-0;
+}
+
+.splide {
+	@apply relative invisible;
+}
+
+.splide.is-initialized,
+.splide.is-rendered {
+	@apply visible;
+}
+
+.splide__slide {
+	@apply backface-hidden box-border flex-shrink-0 list-none m-0 relative;
+}
+
+.splide__slide img {
+	@apply align-bottom;
+}
+
+.splide__spinner {
+	@apply animate-spin border-2 border-current rounded-full size-5 absolute inset-0 m-auto;
+	border-left-color: transparent;
+	contain: strict;
+}
+
+.splide__sr {
+	@apply border-0 h-px -m-px overflow-clip p-0 absolute w-px;
+}
+
+.splide__toggle.is-active .splide__toggle__play,
+.splide__toggle__pause {
+	@apply hidden;
+}
+
+.splide__toggle.is-active .splide__toggle__pause {
+	@apply inline;
+}
+
+.splide__track {
+	@apply overflow-hidden relative z-0;
+}
+
+.splide__arrow {
+	@apply flex items-center justify-center p-0 absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer;
+}
+
+.splide__arrow svg {
+	@apply size-16;
+}
+
+.splide__arrow svg path {
+	@apply fill-none;
+	stroke-miterlimit: 10;
+	stroke-linecap: round;
+}
+
+.splide__arrow:hover:not(:disabled) {
+	@apply opacity-90;
+}
+
+.splide__arrow:disabled {
+	@apply opacity-30;
+}
+
+.splide__arrow:focus-visible {
+	@apply outline outline-[3px] outline-[#0bf] outline-offset-[3px];
+}
+
+.splide__arrow--prev {
+	@apply -left-20;
+}
+
+.splide__arrow--prev svg {
+	@apply -scale-x-100;
+}
+
+.splide__arrow--next {
+	@apply -right-20;
+}

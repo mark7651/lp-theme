@@ -1,4 +1,4 @@
-<?php if ( ! defined('LP_THEME_DIR')) exit('No direct script access allowed');
+<?php if (! defined('LP_THEME_DIR')) exit('No direct script access allowed');
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -6,22 +6,24 @@
  * ------------------------------------------------------------------------------------------------
  */
 
-if ( ! function_exists( 'lp_contact_form_shortcode' ) ) {
-    function lp_contact_form_shortcode() {
+if (! function_exists('lp_contact_form_shortcode')) {
+    function lp_contact_form_shortcode()
+    {
         ob_start();
-        get_template_part( 'template-parts/forms/form', 'contact' ); 
+        get_template_part('template-parts/forms/form', 'contact');
         return ob_get_clean();
     }
-    add_shortcode( 'form-contact', 'lp_contact_form_shortcode' );
+    add_shortcode('form-contact', 'lp_contact_form_shortcode');
 }
 
-if ( ! function_exists( 'lp_callback_form_shortcode' ) ) {
-    function lp_callback_form_shortcode() {
+if (! function_exists('lp_callback_form_shortcode')) {
+    function lp_callback_form_shortcode()
+    {
         ob_start();
-        get_template_part( 'template-parts/forms/form', 'callback' ); 
+        get_template_part('template-parts/forms/form', 'callback');
         return ob_get_clean();
     }
-    add_shortcode( 'form-callback', 'lp_callback_form_shortcode' );
+    add_shortcode('form-callback', 'lp_callback_form_shortcode');
 }
 
 /**
@@ -30,24 +32,43 @@ if ( ! function_exists( 'lp_callback_form_shortcode' ) ) {
  * ------------------------------------------------------------------------------------------------
  */
 
-if ( ! function_exists( 'send_smtp_email' ) ) {
-    add_action( 'phpmailer_init', 'send_smtp_email' );
-    function send_smtp_email( $phpmailer ) {
-        if( !get_field( 'enable_smtp' , 'option' ) ) return;
-        $phpmailer->isSMTP();
-        $phpmailer->CharSet    = 'UTF-8';
-        $phpmailer->Host       = get_field('smtp_host', 'option');
-        $phpmailer->Port       = get_field('smtp_port', 'option');
-        $phpmailer->SMTPSecure = 'ssl';
-        $phpmailer->SMTPAuth   = true;
-        $phpmailer->Username   = get_field('smtp_username', 'option');
-        $phpmailer->Password   = get_field('smtp_password', 'option');
-        $phpmailer->From       = get_field('smtp_username', 'option');
-        $phpmailer->FromName   = esc_attr(get_bloginfo( 'name' ));
-        //$phpmailer->addReplyTo('lpunity.info@gmail.com', 'Information');
-        $phpmailer->AltBody = strip_tags($phpmailer->Body);
+function lp_send_smtp_email($phpmailer)
+{
+    if (! function_exists('get_field') || ! get_field('enable_smtp', 'option')) {
+        return;
     }
+
+    // Retrieve SMTP settings
+    $host     = get_field('smtp_host', 'option');
+    $port     = get_field('smtp_port', 'option');
+    $username = get_field('smtp_username', 'option');
+    $password = get_field('smtp_password', 'option');
+    $secure   = get_field('smtp_secure', 'option') ?: 'ssl'; // Default to 'ssl' if not set
+
+    if (empty($host) || empty($port) || empty($username) || empty($password)) {
+        return;
+    }
+
+    // Configure PHPMailer for SMTP
+    $phpmailer->isSMTP();
+    $phpmailer->CharSet    = 'UTF-8';
+    $phpmailer->Host       = sanitize_text_field($host);
+    $phpmailer->Port       = absint($port);
+    $phpmailer->SMTPSecure = in_array($secure, ['ssl', 'tls'], true) ? $secure : 'ssl';
+    $phpmailer->SMTPAuth   = true;
+    $phpmailer->Username   = sanitize_text_field($username);
+    $phpmailer->Password   = $password;
+    $phpmailer->From       = sanitize_email($username);
+    $phpmailer->FromName   = esc_attr(get_bloginfo('name'));
+
+    // Ensure AltBody is set for plain-text fallback
+    $phpmailer->AltBody = wp_strip_all_tags($phpmailer->Body);
+
+    // Optional: Add Reply-To (uncomment and configure if needed)
+    // $phpmailer->addReplyTo( sanitize_email( 'reply@example.com' ), esc_attr__( 'Information', 'lp-seo' ) );
 }
+
+add_action('phpmailer_init', 'lp_send_smtp_email');
 
 
 /**
@@ -56,261 +77,303 @@ if ( ! function_exists( 'send_smtp_email' ) ) {
  * ------------------------------------------------------------------------------------------------
  */
 
- function email_template($content) {
-    $logo_rastr = get_field('header_logo', 'option');
-    $logo = esc_url($logo_rastr['url']);
+function email_template($content)
+{
+    $logo_rastr = get_field('header_logo', 'option') ?: [];
+    $logo = esc_url($logo_rastr['url'] ?? get_template_directory_uri() . '/assets/default-logo.png');
     $site_name = get_bloginfo('name');
-    $site_url = get_bloginfo('url');
+    $site_url = home_url();
 
-    ob_start();
     $output = '
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <meta charset="utf-8">
-                <title>' . $site_name . '</title>
-            </head>
+     <!DOCTYPE html>
+     <html lang="en">
+     <head>
+         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+         <title>' . esc_html($site_name) . '</title>
+         <style>
+             /* GLOBAL RESETS */
+             body {
+                 font-family: Helvetica, sans-serif;
+                 -webkit-font-smoothing: antialiased;
+                 font-size: 16px;
+                 line-height: 1.3;
+                 -ms-text-size-adjust: 100%;
+                 -webkit-text-size-adjust: 100%;
+                 background-color: #f4f5f6;
+                 margin: 0;
+                 padding: 0;
+             }
+             table {
+                 border-collapse: separate;
+                 mso-table-lspace: 0pt;
+                 mso-table-rspace: 0pt;
+                 width: 100%;
+             }
+             table td {
+                 font-family: Helvetica, sans-serif;
+                 font-size: 16px;
+                 vertical-align: top;
+             }
+             /* BODY & CONTAINER */
+             .body {
+                 background-color: #f4f5f6;
+                 width: 100%;
+             }
+             .container {
+                 margin: 0 auto !important;
+                 max-width: 600px;
+                 padding: 0;
+                 padding-top: 24px;
+                 width: 600px;
+             }
+             .content {
+                 box-sizing: border-box;
+                 display: block;
+                 margin: 0 auto;
+                 max-width: 600px;
+                 padding: 0;
+             }
+             /* HEADER, FOOTER, MAIN */
+             .main {
+                 background: #ffffff;
+                 border: 1px solid #eaebed;
+                 border-radius: 16px;
+                 width: 100%;
+             }
+             .header {
+                 padding: 24px;
+                 text-align: center;
+             }
+             .wrapper {
+                 box-sizing: border-box;
+                 padding: 24px;
+             }
+             .footer {
+                 clear: both;
+                 padding-top: 24px;
+                 text-align: center;
+                 width: 100%;
+             }
+             .footer td, .footer p, .footer span, .footer a {
+                 color: #9a9ea6;
+                 font-size: 16px;
+                 text-align: center;
+             }
+             /* TYPOGRAPHY */
+             p {
+                 font-family: Helvetica, sans-serif;
+                 font-size: 16px;
+                 font-weight: normal;
+                 margin: 0;
+                 margin-bottom: 16px;
+             }
+             a {
+                 color: #0867ec;
+                 text-decoration: underline;
+             }
+             .logo {
+                 max-width: 200px;
+                 height: auto;
+             }
+             /* RESPONSIVE STYLES */
+             @media only screen and (max-width: 640px) {
+                 .main p, .main td, .main span { font-size: 16px !important; }
+                 .wrapper { padding: 8px !important; }
+                 .content { padding: 0 !important; }
+                 .container { padding: 0 !important; padding-top: 8px !important; width: 100% !important; }
+                 .main { border-left-width: 0 !important; border-radius: 0 !important; border-right-width: 0 !important; }
+             }
+             /* PRESERVE STYLES */
+             @media all {
+                 .ExternalClass { width: 100%; }
+                 .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+                 .apple-link a { color: inherit !important; font-family: inherit !important; font-size: inherit !important; font-weight: inherit !important; line-height: inherit !important; text-decoration: none !important; }
+                 #MessageViewBody a { color: inherit; text-decoration: none; font-size: inherit; font-family: inherit; font-weight: inherit; line-height: inherit; }
+             }
+         </style>
+     </head>
+     <body>
+         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+             <tr>
+                 <td>&nbsp;</td>
+                 <td class="container">
+                     <div class="content">
+                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="main">
+                             <tr>
+                                 <td class="header">
+                                     <img src="' . $logo . '" alt="' . esc_attr($site_name) . '" class="logo">
+                                 </td>
+                             </tr>
+                             <tr>
+                                 <td class="wrapper">
+                                     ' . $content . '
+                                 </td>
+                             </tr>
+                         </table>
+                         <div class="footer">
+                             <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                 <tr>
+                                     <td class="content-block">
+                                         <span class="apple-link">' . esc_html($site_name) . '</span>
+                                     </td>
+                                 </tr>
+                             </table>
+                         </div>
+                     </div>
+                 </td>
+                 <td>&nbsp;</td>
+             </tr>
+         </table>
+     </body>
+     </html>';
 
-            <body>
-                <div style="max-width: 600px; margin: 0 auto;">
-                <table role="presentation"
-                style="width:100%; max-width:600px;border-collapse:collapse;border:0;border-spacing:0;background:black;">
-                <tr>
-                    <td align="center" style="padding:0;">
-                        <table role="presentation"
-                            style="width:100%;border-collapse:collapse;border-spacing:0;text-align:left;">
-                            <thead>
-                                <tr>
-                                    <td align="center" style="padding:40px 0 30px 0;background:#333;">
-                                        <img src="'. $logo .'" alt="logo" width="200"
-                                        style="height:auto;display:block;">
-                                    </td>
-                                </tr>
-                            </thead>
-                            <tr>
-                                <td style="padding:36px 30px 42px 30px;">
-                                    <table role="presentation"
-                                        style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
-                                        <tr>
-                                            <td style="padding:0;">
-                                                <table role="presentation"
-                                                    style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
-                                                    <tr>
-                                                        <td style="color: #fff;line-height: 1.5;">
-                                                        '.$content.'
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding:30px;background:#333;">
-                                    <table role="presentation"
-                                        style="width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:16px;font-family:Arial,sans-serif;">
-                                        <tr>
-                                            <td style="padding:0;width:40%;" align="left">
-                                                <p
-                                                    style="margin:0;font-size:16px;line-height:16px;font-family:Arial,sans-serif;color:#ffffff;">
-                                                    <a href="' . $site_url . '">
-                                                        ' . $site_name . '
-                                                    </a>
-                                                </p>
-                                            </td>
-                                            <td style="padding:0;width:60%;" align="right">
-                                                <table role="presentation"
-                                                    style="border-collapse:collapse;border:0;border-spacing:0;">
-                                                    <tr>
-                                                        <td style="padding:0 0 0 10px; font-size:16px;">
-
-                                                        </td>
-
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-                </div>
-            </body>
-
-        </html>
-    ';
-    ob_get_clean();
     return $output;
-    
 }
 
 
- /**
+/**
  * ------------------------------------------------------------------------------------------------
  * mail functions
  * ------------------------------------------------------------------------------------------------
  */
 
-if (!function_exists('email_recipients')) {
-    function email_recipients() {
+function email_recipients()
+{
+    $recipients = [get_option('admin_email', '')];
 
-        $admin_email = get_option('admin_email');
+    $callback_email = get_field('callback_email', 'option');
+    $contact_email = get_field('contact_email', 'option');
 
-        $callback_email = get_field('callback_email', 'option');
-        $contact_email = get_field('contact_email', 'option');
-
-        $form_callback = isset($_POST["callback-form"]);
-        $form_contact = isset($_POST["contact-form"]);
-
-        $recipients = array();
-        $recipients[] = $admin_email;
-
-
-        if ($form_callback && !empty($callback_email)) {
-            $recipients[] = $callback_email;
-        }
-
-        if ($form_contact && !empty($contact_email)) {
-            $recipients[] = $contact_email;
-        }
-
-        return $recipients;
+    if (isset($_POST["callback-form"]) && !empty($callback_email)) {
+        $recipients[] = sanitize_email($callback_email);
     }
+
+    if (isset($_POST["contact-form"]) && !empty($contact_email)) {
+        $recipients[] = sanitize_email($contact_email);
+    }
+
+    return array_filter($recipients);
 }
 
 
+class LP_Forms
+{
+    private static $secret_token = '5174804345017800239';
 
-class LP_Forms {
-
-    private static function hasValidToken() {
-        $token = '5174804345017800239';
-        if (isset($_POST['contact_secret']) && isset($_POST['honey_field'])) {
-            return $_POST['contact_secret'] === $token && $_POST['honey_field'] === '';
+    private static function verify_submission()
+    {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'lp-nonce')) {
+            return ['code' => 403, 'message' => esc_html__('Verification error, try again', 'lptheme')];
         }
-        return false;
-    }    
 
-    public static function lp_send_message() {
+        if (
+            !isset($_POST['contact_secret']) ||
+            !isset($_POST['honey_field']) ||
+            $_POST['contact_secret'] !== self::$secret_token ||
+            !empty($_POST['honey_field'])
+        ) {
+            return ['code' => 400, 'message' => esc_html__('Invalid submission', 'lptheme')];
+        }
 
-        $responce_message = '';
-        $response_code = '';
+        return true;
+    }
 
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    private static function process_attachments()
+    {
+        if (!isset($_FILES['attachment']) || $_FILES['attachment']['error'][0] == 4) {
+            return [];
+        }
 
-            if (! wp_verify_nonce( $_POST['nonce'], 'lp-nonce')) {
-                $responce_message = esc_html__( 'Verification error, try again', 'lptheme' );
-            } elseif (!self::hasValidToken()) {
-                $responce_message = esc_html__( 'SPAM', 'lptheme' );
-            } else {
+        $attachments = [];
+        $upload_overrides = ['test_form' => false];
 
-                $to = email_recipients();
-                $current_time = date('Y-m-d H:i:s');
+        foreach ($_FILES['attachment']['name'] as $key => $value) {
+            if (!$_FILES['attachment']['name'][$key]) continue;
 
-                // Sanitize the form data
-                $name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
-                $phone = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
-                $email = isset( $_POST['email'] ) ? sanitize_text_field( $_POST['email'] ) : '';
-                $message  = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';
-                $form_page = isset( $_POST['form_page'] ) ? sanitize_text_field( $_POST['form_page'] ) : '';
-                $form_name = isset( $_POST['form_name'] ) ? sanitize_text_field( $_POST['form_name'] ) : '';
+            $file = [
+                'name' => $_FILES['attachment']['name'][$key],
+                'type' => $_FILES['attachment']['type'][$key],
+                'tmp_name' => $_FILES['attachment']['tmp_name'][$key],
+                'error' => $_FILES['attachment']['error'][$key],
+                'size' => $_FILES['attachment']['size'][$key]
+            ];
 
-                $headers = 'From: ' . $name. "\r\n";
-                $headers = 'Reply-to:' . $email. "\r\n";
-                
-                // Message Template ==============================
-
-				if (isset($_POST["contact-form"])) { // contact form submit
-                    $subject = $form_name;
-                    $body = '<h2 style="color: #fff;">Данные заявки:</h2>';
-                    if($name){ $body .= '<p><b>Имя:</b> '.$name.'</p>';}
-                    if($phone){ $body .= '<p><b>Телефон:</b> '.$phone.'</p>';}
-					if($email){ $body .= '<p><b>Email:</b> '.$email.'</p>';}
-					if($message){ $body .= '<p><b>Сообщение:</b> '.$message.'</p>';}
-                    $body .= '<p><b>Время отправки:</b> ' . $current_time . '</p>';
-
-				} else { //other forms submit
-					$subject = $form_name;
-                    $body = '<h2 style="color: #fff;">Данные заявки:</h2>';
-                    if($name){ $body .= '<p><b>Имя:</b> '.$name.'</p>';}
-                    if($phone){ $body .= '<p><b>Телефон:</b> '.$phone.'</p>';}
-					if($email){ $body .= '<p><b>Email:</b> '.$email.'</p>';}
-					if($message){ $body .= '<p><b>Cообщщение:</b> '.$message.'</p>';}
-                    if($form_page){ $body .= '<p><b>Страница заявки:</b> '.$form_page.'</p>';}
-                    $body .= '<p><b>Время отправки:</b> ' . $current_time . '</p>';
-				}
-
-                // Message Template ==============================
-    
-                // attachments
-                if ( isset( $_FILES['attachment'] ) && $_FILES['attachment']['error'][0] != 4 ) {
-                    $files = $_FILES[ 'attachment' ];
-                    $upload_overrides = array( 'test_form' => false );
-                    $attachments = array();
-                    foreach ( $files['name'] as $key => $value ) {
-                        if ( $files[ 'name' ][ $key ] ) {
-                            $file = array(
-                                'name' => $files[ 'name' ][ $key ],
-                                'type' => $files[ 'type' ][ $key ],
-                                'tmp_name' => $files[ 'tmp_name' ][ $key ],
-                                'error' => $files[ 'error' ][ $key ],
-                                'size' => $files[ 'size' ][ $key ]
-                            );
-                            $movefile = wp_handle_upload($file,$upload_overrides);
-                            $attachments[] = $movefile[ 'file' ];
-                        }
-                    }
-                }
-
-                if ( wp_mail($to, $subject, email_template($body), $headers, $attachments) ) {
-                    
-                    $response_code = 200;
-                    $responce_message =  esc_html__( 'Your message has been successfully sent!', 'lptheme' );
-
-                    // remove files after been sent
-                    if ( isset( $_FILES['attachment'] ) && $_FILES['attachment']['error'][0] != 4 ) {
-                        foreach ( (array)$attachments as $file ) {
-                            if( file_exists($file) ) {
-                            unlink($file);
-                            }
-                        }
-                    }
-                    
-                    // send data to telegram
-                    
-                    $token = get_field('telegram_token' , 'option');
-                    $chat_id = get_field('telegram_chat_id' , 'option');
-
-                    if (isset ($token) && ($chat_id)) {
-                        $sendToTelegram = fopen("https://api.telegram.org/bot{$token}/sendMessage?chat_id={$chat_id}&parse_mode=html&text={$message}","r");
-                    }
-
-                } else {
-                    $response_code = 500;
-                    $responce_message = esc_html__( 'Check the form fields', 'lptheme' );
-                }
-
+            $movefile = wp_handle_upload($file, $upload_overrides);
+            if (isset($movefile['file'])) {
+                $attachments[] = $movefile['file'];
             }
-            
-        } else {
-            $response_code = 405;
-            $responce_message = esc_html__( 'Method Not Allowed', 'lptheme' );
         }
 
-
-        echo json_encode(array('message' => $responce_message, 'code' => $response_code));
-        exit();
-    
+        return $attachments;
     }
-    
-    public static function lp_mail_content_type() {
-        return "text/html";
+
+    public static function lp_send_message()
+    {
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            wp_send_json(['message' => esc_html__('Method Not Allowed', 'lptheme'), 'code' => 405]);
+        }
+
+        $verification = self::verify_submission();
+        if ($verification !== true) {
+            wp_send_json($verification);
+        }
+
+        $fields = [
+            'name' => sanitize_text_field($_POST['name'] ?? ''),
+            'last_name' => sanitize_text_field($_POST['last-name'] ?? ''),
+            'company' => sanitize_text_field($_POST['company'] ?? ''),
+            'phone' => sanitize_text_field($_POST['phone'] ?? ''),
+            'email' => sanitize_email($_POST['email'] ?? ''),
+            'job' => sanitize_text_field($_POST['job-title'] ?? ''),
+            'message' => sanitize_textarea_field($_POST['message'] ?? ''),
+        ];
+
+        $body = '<h2><strong>New Submission</strong></h2>';
+        foreach ($fields as $key => $value) {
+            if ($value) {
+                $body .= '<p><strong>' . ucfirst(str_replace('_', ' ', $key)) . ':</strong> ' . esc_html($value) . '</p>';
+            }
+        }
+
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $fields['name'] . ' <' . $fields['email'] . '>',
+            'Reply-To: ' . $fields['email']
+        ];
+
+        $attachments = self::process_attachments();
+        $recipients = email_recipients();
+
+        $sent = wp_mail(
+            $recipients,
+            'New Submission',
+            email_template($body),
+            $headers,
+            $attachments
+        );
+
+        // Clean up attachments
+        foreach ($attachments as $file) {
+            if (file_exists($file)) {
+                @unlink($file);
+            }
+        }
+
+        wp_send_json([
+            'message' => $sent
+                ? esc_html__('Message sent successfully!', 'lptheme')
+                : esc_html__('Failed to send message', 'lptheme'),
+            'code' => $sent ? 200 : 500
+        ]);
+    }
+
+    public static function lp_mail_content_type()
+    {
+        return 'text/html';
     }
 }
 
-add_action('wp_ajax_lp_send_message', array('LP_Forms', 'lp_send_message') );
-add_action('wp_ajax_nopriv_lp_send_message', array('LP_Forms', 'lp_send_message') );
-add_filter('wp_mail_content_type', array('LP_Forms', 'lp_mail_content_type') );
+add_action('wp_ajax_lp_send_message', ['LP_Forms', 'lp_send_message']);
+add_action('wp_ajax_nopriv_lp_send_message', ['LP_Forms', 'lp_send_message']);
+add_filter('wp_mail_content_type', ['LP_Forms', 'lp_mail_content_type']);

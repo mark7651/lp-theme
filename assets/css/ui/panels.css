@@ -1,0 +1,34 @@
+.overlay {
+	@apply fixed top-0 left-0 w-full h-full z-[600] opacity-0 invisible bg-black/85 backdrop-blur-[100px] transition-opacity duration-300;
+}
+.panel-fill {
+	@apply fixed top-0 right-0 bottom-0 z-[973] h-screen w-full max-w-[50rem] origin-right bg-white translate-x-[120%] pointer-events-none transition-all duration-500;
+}
+.panel-showed {
+	@apply overflow-hidden;
+}
+
+.panel-showed .overlay {
+	@apply !opacity-87 !visible cursor-crosshair;
+}
+
+.panel-show {
+	@apply pointer-events-auto !translate-x-0 z-[997];
+}
+
+.panel-show .panel-content {
+	@apply opacity-100;
+}
+.panel-content {
+	@apply h-full overflow-y-auto mx-auto transition-all duration-500 opacity-0 px-30 py-60 md:px-60 xl:px-100 md:py-100;
+	transition-timing-function: cubic-bezier(0.19, 1, 0.56, 1);
+}
+
+.panel-showed .panel-fill,
+.panel-showed .aside-panel {
+	@apply !translate-x-0;
+}
+
+.panel-close {
+	@apply absolute bottom-40 md:bottom-[unset] md:top-30 md:right-30 xl:right-60 right-1/2 translate-x-1/2 size-30 xl:size-30 bg-white rounded-full grid place-items-center z-[1000] border-0 hover:opacity-70 before:content-[''] before:absolute before:w-30 xl:before:w-30 before:h-[2px] before:bg-current before:rounded-[2px] before:rotate-45 before:transition-all before:duration-200 after:content-[''] after:absolute after:w-30 xl:after:w-30 after:h-[2px] after:bg-current after:rounded-[2px] after:-rotate-45 after:transition-all after:duration-200 text-black;
+}

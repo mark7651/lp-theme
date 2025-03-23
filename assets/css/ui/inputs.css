@@ -1,0 +1,12 @@
+.input-field.error {
+	@apply border-red;
+}
+.input-field {
+	@apply bg-white placeholder:text-gray p-20 md:p-30 w-full outline-none ring-0 text-black h-[56px] md:h-[76px] xl:h-[90px] text-[14px] md:text-[18px] font-medium border border-[#EEF3F6] focus:border-primary focus:ring-0 focus:ring-primary rounded-[12px];
+}
+.sent .notification-box {
+	@apply !opacity-100 !visible !pointer-events-auto;
+}
+.notification-box {
+	@apply absolute z-[1] flex items-center justify-center inset-0 p-40 translate-y-2 transition-all duration-200 opacity-0 bg-white text-black invisible pointer-events-none rounded-[20px];
+}

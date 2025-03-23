@@ -1,0 +1,94 @@
+* {
+	scrollbar-width: thin;
+}
+html {
+	@apply antialiased select-none font-main text-[14px] md:text-[18px] xl:text-[var(--root-size)];
+	-webkit-font-smoothing: antialiased;
+	font-kerning: none;
+	font-variant-ligatures: none;
+}
+
+body {
+	@apply bg-white text-black min-w-[280px] mx-auto;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+	@apply overscroll-auto;
+}
+.lenis.lenis-smooth {
+	@apply h-screen scroll-auto;
+}
+
+.lenis.lenis-stopped,
+.lenis.lenis-stopped body {
+	@apply overflow-hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+	@apply pointer-events-none;
+}
+
+main {
+	@apply min-h-[50vh];
+}
+
+p {
+	text-wrap: pretty;
+}
+
+p + p {
+	@apply mt-10;
+}
+p:not(:last-child) {
+	@apply mb-10;
+}
+
+p:last-child {
+	@apply mb-0;
+}
+
+picture {
+	@apply block overflow-clip;
+	contain: content;
+}
+
+img,
+video {
+	@apply block h-auto w-full object-cover pointer-events-none select-none;
+}
+
+::selection {
+	@apply text-white bg-primary;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	@apply m-0 appearance-none;
+}
+
+button,
+a {
+	@apply transition-all duration-300 cursor-pointer;
+}
+em {
+	@apply italic;
+}
+.loading {
+	@apply cursor-wait;
+}
+output {
+	@apply inline-block;
+}
+section {
+	@apply relative;
+}
+.container {
+	@apply relative mx-auto px-[10px] md:px-[20px] 2xl:px-[40px];
+}
+.section {
+	@apply relative;
+	padding-block: min(150px, calc(50px + 110 * (100vw - 320px) / 1640));
+}
+.wp-caption-text {
+	@apply hidden;
+}

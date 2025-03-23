@@ -5,13 +5,15 @@
  * Contains the closing of the #content div and all content after.
  *
  *
- * @package lptheme
  */
-
 ?>
 
-<div class="overlay"></div>
+</main>
 
+<?php get_template_part('template-parts/global/footer') ?>
+</div>
+
+<?php get_template_part('template-parts/global/panels') ?>
 <?php wp_footer(); ?>
 
 </body>

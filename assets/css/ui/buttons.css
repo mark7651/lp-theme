@@ -1,0 +1,47 @@
+.btn,
+.btn-small {
+	@apply relative inline-flex w-full lg:w-fit items-center text-center
+		h-[56px] lg:h-[76px] xl:h-[90px]
+		leading-[100%] font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-70;
+}
+
+.header .btn-small {
+	@apply max-sm:h-[40px];
+}
+
+.btn .aspect-square {
+	@apply rtl:scale-x-[-1];
+}
+
+.btn-secondary {
+	@apply text-black bg-secondary;
+}
+.btn-primary {
+	@apply text-white bg-primary;
+}
+.btn-white {
+	@apply text-black bg-white;
+}
+.btn-small {
+	@apply h-[52px] rounded-[12px] px-16 lg:px-30 justify-center;
+}
+
+.btn-loading {
+	@apply relative text-transparent hover:text-transparent;
+}
+
+.btn-primary.loading::after {
+	@apply absolute inset-0 m-auto
+           w-5 h-5
+           border-2 border-white border-t-primary
+           rounded-full
+           animate-spin;
+	content: '';
+}
+
+.btn svg {
+	@apply size-12 lg:size-16;
+}
+.link-btn {
+	@apply inline-flex items-center gap-10 transition-opacity pb-4 border-b w-fit hover:opacity-70;
+}
