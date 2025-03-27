@@ -8,6 +8,7 @@ import {
 	processLazyImages,
 	scrollToAnchor,
 	setPagePositionTop,
+	stickyHeader,
 } from './utils.js'
 
 import { LPForm } from './forms.js'
@@ -164,7 +165,10 @@ barba.init({
 
 			async enter(data) {
 				loader.hide()
-				setTimeout(() => reinitForBarba(), 400)
+			},
+			async after() {
+				setPagePositionTop()
+				reinitForBarba()
 			},
 		},
 	],
@@ -177,7 +181,6 @@ barba.hooks.beforeEnter(({ current, next }) => {
 	document.body.setAttribute('class', (matches && matches[1]) ?? '')
 
 	//scripts.init()
-	setPagePositionTop()
 })
 
 barba.hooks.afterEnter(data => {
@@ -201,19 +204,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function reinitForBarba() {
 	lazyVideos()
-	initSliders()
 	initAnimationRefresh()
 
-	if (ScrollTrigger) {
-		ScrollTrigger.refresh()
-	}
 	new LPForm('form-contact')
 	window.addEventListener('load', processLazyImages)
 	document.addEventListener('click', handleAnchorClick)
+	if (ScrollTrigger) {
+		ScrollTrigger.refresh()
+	}
 }
 
 function initOnceFunctions() {
 	initAsidePanels()
+	stickyHeader()
 	window.loader = new LoaderComponent()
 }
 
@@ -262,8 +265,9 @@ function reller() {
 		const links = line.querySelectorAll('.reeller-item')
 		return horizontalLoop(links, {
 			repeat: -1,
-			speed: 1.5 + i * 1.5,
-			reversed: false,
+			speed: 1.25,
+			reversed: i == 1 ? true : false,
+			invalidateOnRefresh: true,
 			paddingRight: parseFloat(gsap.getProperty(links[0], 'marginRight', 'px')),
 		})
 	})
@@ -470,8 +474,7 @@ function initFadeAnimations() {
 				opacity: 1,
 				duration: 0.6,
 				willChange: 'opacity, transform',
-				delay: index * 0.02,
-				ease: 'power1.out',
+				ease: 'power1.inOut',
 			}
 		)
 		triggers.push(tl.scrollTrigger)
@@ -479,56 +482,5 @@ function initFadeAnimations() {
 
 	return () => {
 		triggers.forEach(trigger => trigger.kill())
-	}
-}
-
-function initSliders() {
-	const pressSlider = document.querySelector('.press-slider')
-	if (!pressSlider) return
-
-	if (typeof Splide === 'undefined') {
-		console.warn('Splide is not loaded')
-		return
-	}
-
-	try {
-		const splide = new Splide(pressSlider, {
-			type: 'loop',
-			perPage: 3,
-			perMove: 1,
-			gap: 30,
-			autoHeight: true,
-			arrows: false,
-			pagination: false,
-			autoplay: false,
-			interval: 4000,
-			breakpoints: {
-				868: {
-					perPage: 2,
-				},
-				568: {
-					perPage: 1,
-				},
-			},
-		})
-
-		const prevButton = document.querySelector('.press-prev__btn')
-		const nextButton = document.querySelector('.press-next__btn')
-
-		if (prevButton) {
-			prevButton.onclick = () => splide.go('<')
-		} else {
-			console.warn('Prev button not found')
-		}
-
-		if (nextButton) {
-			nextButton.onclick = () => splide.go('>')
-		} else {
-			console.warn('Next button not found')
-		}
-
-		splide.mount()
-	} catch (error) {
-		console.error('Error initializing slider:', error)
 	}
 }

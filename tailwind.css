@@ -16,6 +16,11 @@ Use it to make something cool, have fun, and share what you've learned.
 
 @import 'tailwindcss';
 
+@plugin "@igorkowalczyk/is-browser";
+@plugin 'tailwind-scrollbar' {
+	nocompatible: true;
+}
+
 @import './assets/css/fonts.css' layer(base);
 @import './assets/css/base.css' layer(base);
 
@@ -86,6 +91,14 @@ Use it to make something cool, have fun, and share what you've learned.
 	--radius-2xl: 1rem;
 	--radius-3xl: 1.5rem;
 	--radius-4xl: 2rem;
+
+	--shadow-2xs: 0 1px #0000000d;
+	--shadow-xs: 0 1px 2px 0 #0000000d;
+	--shadow-sm: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
+	--shadow-md: 	0 0 10px 5px rgba(32, 247, 150, 0);
+	--shadow-lg: 0 10px 25px 0px #bbbbbb1a;
+	--shadow-xl: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
+	--shadow-2xl: 0 25px 50px -12px #00000040;
 
 	--default-transition-duration: 250ms;
 	--default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

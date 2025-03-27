@@ -124,6 +124,119 @@ function initAsidePanels() {
 	}
 }
 
+function initModals() {
+	const overlay = document.querySelector('.modal-overlay')
+	let activeModal = null
+	let activeTrigger = null
+
+	function closeModal(modal, trigger) {
+		if (!modal) return
+
+		modal.classList.remove('modal-show')
+		document.body.classList.remove('modal-opened')
+		trigger?.classList.remove('active')
+		document.body.removeAttribute('style')
+
+		activeModal = null
+		activeTrigger = null
+
+		if (typeof lenis !== 'undefined') {
+			lenis.start()
+		}
+
+		overlay.removeEventListener('click', handleOverlayClick)
+	}
+
+	function handleOverlayClick() {
+		closeModal(activeModal, activeTrigger)
+	}
+
+	function handleCloseClick(e) {
+		e.stopPropagation()
+		closeModal(activeModal, activeTrigger)
+	}
+
+	function openModal(modal, trigger) {
+		if (typeof lenis !== 'undefined') {
+			lenis.stop()
+		}
+
+		if (document.body.classList.contains('modal-opened')) {
+			closeModal(activeModal, activeTrigger)
+		}
+
+		compensateScrollbar()
+
+		activeModal = modal
+		activeTrigger = trigger
+		document.body.classList.add('modal-opened')
+		trigger?.classList.add('active')
+		modal.classList.add('modal-show')
+
+		overlay.addEventListener('click', handleOverlayClick)
+		const closeBtn = modal.querySelector('.modal-close')
+		if (closeBtn) {
+			closeBtn.addEventListener('click', handleCloseClick)
+		}
+	}
+
+	function handleModalTriggerClick(event) {
+		const trigger = event.target.closest('.modal-trigger')
+		if (!trigger) return
+
+		const modalId = trigger.getAttribute('data-modal')
+
+		if (!modalId) {
+			console.warn('Modal trigger is missing data-modal attribute')
+			return
+		}
+
+		const modal = document.querySelector('#' + modalId)
+		if (!modal) {
+			console.warn(`Modal with id "${modalId}" not found`)
+			return
+		}
+
+		openModal(modal, trigger)
+	}
+
+	function init() {
+		document.removeEventListener('click', handleModalTriggerClick)
+		document.addEventListener('click', handleModalTriggerClick)
+		document.addEventListener('keydown', e => {
+			if (e.key === 'Escape' && activeModal) {
+				closeModal(activeModal, activeTrigger)
+			}
+		})
+	}
+
+	function destroy() {
+		document.removeEventListener('click', handleModalTriggerClick)
+		overlay.removeEventListener('click', handleOverlayClick)
+
+		if (activeModal) {
+			const closeBtn = activeModal.querySelector('.modal-close')
+			closeBtn?.removeEventListener('click', handleCloseClick)
+		}
+		document.body.removeAttribute('style')
+	}
+
+	function closeModalById(id) {
+		const modal = document.querySelector('#' + id)
+		const trigger = document.querySelector(`[data-modal="${id}"].active`)
+		closeModal(modal, trigger)
+	}
+
+	init()
+
+	return {
+		closeModal,
+		openModal,
+		destroy,
+		closeModalById,
+	}
+}
+
 function hideOpenedPanels() {
 	const activePanels = document.querySelectorAll('.panel-show')
 	const activeBtnTriggers = document.querySelectorAll('.panel-trigger.active')
@@ -160,7 +273,7 @@ const debounce = (func, delay) => {
 
 const setPagePositionTop = () => {
 	if (window.scrollTo) {
-		window.scrollTo(0, 0)
+		window.scrollTo({ top: 0, behavior: 'instant' })
 	} else if (document.body.scrollTop) {
 		document.body.scrollTop = 0
 	} else {
@@ -175,7 +288,6 @@ const getScrollbarWidth = () => {
 	scrollDiv.style.overflow = 'scroll'
 	scrollDiv.style.position = 'absolute'
 	scrollDiv.style.top = '-9999px'
-	scrollDiv.style.scrollbarWidth = 'thin'
 	document.body.appendChild(scrollDiv)
 	const scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth
 	document.body.removeChild(scrollDiv)
@@ -220,18 +332,25 @@ function lazyVideos() {
 }
 
 function scrollToAnchor(hash) {
-	if (!hash || !lenis) return
+	if (!hash) return
 
 	const target = document.querySelector(hash)
 	const header = document.querySelector('.header')
 	const headerHeight = header ? header.offsetHeight : 0
-
 	if (target) {
-		lenis.scrollTo(target, {
-			duration: 0.4,
-			offset: -headerHeight,
-			easing: t => t,
-		})
+		const top =
+			target.getBoundingClientRect().top + window.scrollY - headerHeight
+
+		if (window.lenis) {
+			lenis.scrollTo(top, {
+				duration: immediate ? 0 : 1.2,
+				easing: t => 1 - Math.pow(1 - t, 3),
+			})
+		} else {
+			window.scrollTo({ top, behavior: 'smooth' })
+		}
+
+		history.replaceState(null, null, hash)
 	}
 }
 
@@ -268,18 +387,171 @@ function handleAnchorClick(event) {
 	if (hash) {
 		localStorage.setItem('scrollToHash', `#${hash}`)
 	}
+}
 
-	event.preventDefault()
+function accordeon() {
+	const tabs = document.querySelectorAll('.accordeon-item')
+	const descriptions = document.querySelectorAll('.accordeon-item__description')
+
+	tabs.forEach(function (element) {
+		element.addEventListener('click', toggleItem)
+	})
+
+	descriptions.forEach(function (element) {
+		initHeight(element)
+	})
+
+	tabs.forEach(function (tab) {
+		if (tab.classList.contains('active')) {
+			const descriptionContainer = tab.querySelector(
+				'.accordeon-item__description'
+			)
+			const descriptionHeight = descriptionContainer.getAttribute('data-height')
+			descriptionContainer.style.maxHeight = `${descriptionHeight}px`
+		}
+	})
+
+	function toggleItem() {
+		let siblings = getSiblings(this)
+		let descriptionContainer = this.querySelector(
+			'.accordeon-item__description'
+		)
+		let descriptionHeight = descriptionContainer.getAttribute('data-height')
+		this.classList.toggle('active')
+
+		closeDescriptions(descriptions)
+
+		siblings.forEach(function (sibling) {
+			sibling.classList.remove('active')
+		})
+
+		if (this.classList.contains('active')) {
+			descriptionContainer.style.maxHeight = `${descriptionHeight}px`
+		} else {
+			descriptionContainer.style.maxHeight = 0
+		}
+	}
+
+	function initHeight(item) {
+		let height = item.offsetHeight
+		item.setAttribute('data-height', height)
+		item.style.maxHeight = 0
+	}
+
+	function closeDescriptions(descriptionList) {
+		descriptionList.forEach(function (element) {
+			element.style.maxHeight = 0
+		})
+	}
+
+	function getSiblings(element) {
+		let siblings = new Array()
+
+		let sibling = element.parentNode.firstChild
+		for (; sibling; sibling = sibling.nextSibling) {
+			if (sibling.nodeType !== 1 || sibling === element) continue
+			siblings.push(sibling)
+		}
+		return siblings
+	}
+}
+
+function tabs() {
+	const tabContainer = document.querySelector('[data-tabs]')
+	if (!tabContainer) return
+
+	const tabs = tabContainer.querySelectorAll('[data-tab-target]')
+	const tabContents = document.querySelectorAll('[data-tab-content]')
+
+	tabContainer.addEventListener('click', event => {
+		const clickedTab = event.target.closest('[data-tab-target]')
+		if (!clickedTab) return
+
+		const targetId = clickedTab.dataset.tabTarget
+		const targetContent = document.querySelector(targetId)
+		if (!targetContent) return
+
+		tabs.forEach(tab => tab.classList.remove('active'))
+		tabContents.forEach(content => content.classList.remove('active'))
+
+		clickedTab.classList.add('active')
+		targetContent.classList.add('active')
+	})
+}
+
+const stickyHeader = () => {
+	const header = document.querySelector('.header')
+
+	if (!header) return
+
+	const headerHeight = header.offsetHeight
+	const threshold = headerHeight / 2
+
+	const toggleHeaderClass = () => {
+		header.classList.toggle('scrolled', window.scrollY > threshold)
+	}
+	window.addEventListener('scroll', toggleHeaderClass)
+	toggleHeaderClass()
+}
+
+function initSlider(selector, options = {}, customHandlers = {}) {
+	const sliderElement = document.querySelector(selector)
+	if (!sliderElement) {
+		console.warn(`Slider not found: ${selector}`)
+		return
+	}
+
+	if (typeof Splide === 'undefined') {
+		console.warn('Splide is not loaded')
+		return
+	}
+
+	try {
+		const splide = new Splide(sliderElement, options)
+
+		if (customHandlers.onMounted) {
+			splide.on('mounted', () =>
+				customHandlers.onMounted(splide, sliderElement)
+			)
+		}
+
+		if (customHandlers.navigation) {
+			const { prevSelector, nextSelector } = customHandlers.navigation
+			const prevButtons = document.querySelectorAll(prevSelector)
+			const nextButtons = document.querySelectorAll(nextSelector)
+
+			if (prevButtons.length) {
+				prevButtons.forEach(btn => (btn.onclick = () => splide.go('<')))
+			} else {
+				console.warn(`Prev button not found: ${prevSelector}`)
+			}
+
+			if (nextButtons.length) {
+				nextButtons.forEach(btn => (btn.onclick = () => splide.go('>')))
+			} else {
+				console.warn(`Next button not found: ${nextSelector}`)
+			}
+		}
+
+		splide.mount()
+	} catch (error) {
+		console.error(`Error initializing slider (${selector}):`, error)
+	}
 }
 
 export {
+	accordeon,
 	debounce,
 	handleAnchorClick,
 	hideOpenedPanels,
 	initAsidePanels,
+	initModals,
+	initSlider,
 	isMob,
 	lazyVideos,
 	processLazyImages,
 	scrollToAnchor,
 	setPagePositionTop,
+	stickyHeader,
+	tabs,
 }

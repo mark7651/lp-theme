@@ -59,12 +59,22 @@ class LPForm {
 	setState(state) {
 		this.state.processing = state === 'processing'
 		this.updateClass(this.form, state)
-		this.updateClass(this.submitButton, state)
+		this.updateButtonState(state)
 	}
 
 	updateClass(element, state) {
 		element.className =
 			element.className.replace(/state-[a-z]+/gi, '').trim() + ` state-${state}`
+	}
+
+	updateButtonState(state) {
+		if (state === 'processing') {
+			this.submitButton.classList.add('loading')
+			this.submitButton.disabled = true
+		} else {
+			this.submitButton.classList.remove('loading')
+			this.submitButton.disabled = false
+		}
 	}
 
 	notify(message, type = 'error') {
