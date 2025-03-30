@@ -11,8 +11,6 @@
 </main>
 
 <?php get_template_part('template-parts/global/footer') ?>
-</div>
-
 <?php get_template_part('template-parts/global/panels') ?>
 <?php wp_footer(); ?>
 

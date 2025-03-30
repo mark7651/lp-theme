@@ -1,4 +1,5 @@
 import './barba.js'
+import { LPForm } from './forms.js'
 import {
 	debounce,
 	handleAnchorClick,
@@ -8,32 +9,11 @@ import {
 	processLazyImages,
 	scrollToAnchor,
 	setPagePositionTop,
-	stickyHeader,
 } from './utils.js'
 
-import { LPForm } from './forms.js'
-
-let loader, lenis
-
-function initAnimationRefresh(debounceTime = 300) {
-	let lastWidth = window.innerWidth
-
-	const handleResize = debounce(entries => {
-		const currentWidth = window.innerWidth
-		if (currentWidth !== lastWidth) {
-			lastWidth = currentWidth
-			initAnimationRefresh()
-			ScrollTrigger.refresh()
-			if (lenis) {
-				lenis.resize()
-			}
-		}
-	}, debounceTime)
-
-	const observer = new ResizeObserver(handleResize)
-	observer.observe(document.body)
-
-	return () => observer.disconnect()
+const state = {
+	loader: null,
+	lenis: null,
 }
 
 function loadjscssfile(filename, filetype) {
@@ -59,9 +39,45 @@ function loadjscssfile(filename, filetype) {
 		document.getElementsByTagName('head')[0].appendChild(fileref)
 }
 
+const scripts = {
+	init: function () {
+		if (document.getElementsByTagName('body')[0].classList.contains('home')) {
+			console.log('This is home page')
+		} else if (
+			document
+				.getElementsByTagName('body')[0]
+				.classList.contains('page-template-portfolio')
+		) {
+			console.log('This is projects page')
+			this.projects()
+		}
+	},
+	projects: function () {
+		//const projectJS = '/wp-content/themes/lptheme/js/fslightbox.js'
+		loadjscssfile(projectJS, 'js')
+	},
+}
+
+function initAnimationRefresh(debounceTime = 300) {
+	let lastWidth = window.innerWidth
+
+	const handleResize = debounce(() => {
+		const currentWidth = window.innerWidth
+		if (currentWidth !== lastWidth) {
+			lastWidth = currentWidth
+			ScrollTrigger.refresh()
+			state.lenis?.resize()
+		}
+	}, debounceTime)
+
+	const observer = new ResizeObserver(handleResize)
+	observer.observe(document.body)
+
+	return () => observer.disconnect()
+}
+
 class LoaderComponent {
 	constructor() {
-		this.body = document.querySelector('.layout')
 		this.el = document.querySelector('.loader')
 		this.backdrop = this.el.querySelector('.loader-backdrop')
 		this.fill = this.el.querySelector('.loader-fill')
@@ -125,25 +141,6 @@ class LoaderComponent {
 	}
 }
 
-const scripts = {
-	init: function () {
-		if (document.getElementsByTagName('body')[0].classList.contains('home')) {
-			console.log('This is home page')
-		} else if (
-			document
-				.getElementsByTagName('body')[0]
-				.classList.contains('page-template-portfolio')
-		) {
-			console.log('This is projects page')
-			this.projects()
-		}
-	},
-	projects: function () {
-		//const projectJS = '/wp-content/themes/lptheme/js/fslightbox.js'
-		loadjscssfile(projectJS, 'js')
-	},
-}
-
 barba.init({
 	timeout: 4000,
 	cacheFirstPage: true,
@@ -157,14 +154,14 @@ barba.init({
 			sync: false,
 
 			async leave(data) {
-				await loader.show()
+				await state.loader.show()
 				hideOpenedPanels()
 				ScrollTrigger.getAll().forEach(trigger => trigger.kill())
 				ScrollTrigger.clearScrollMemory()
 			},
 
 			async enter(data) {
-				loader.hide()
+				state.loader.hide()
 			},
 			async after() {
 				setPagePositionTop()
@@ -176,21 +173,13 @@ barba.init({
 
 barba.hooks.beforeEnter(({ current, next }) => {
 	if (!current?.container) return
-
 	const matches = next.html.match(/<body.+?class="([^""]*)"/i)
 	document.body.setAttribute('class', (matches && matches[1]) ?? '')
-
-	//scripts.init()
 })
 
 barba.hooks.afterEnter(data => {
-	lenis.resize()
+	state.lenis.resize()
 	initAnimations()
-	const hash = localStorage.getItem('scrollToHash')
-	if (hash) {
-		setTimeout(() => scrollToAnchor(hash), 300)
-		localStorage.removeItem('scrollToHash')
-	}
 })
 
 /*-----------------------------------------------------------------------------------*/
@@ -198,7 +187,6 @@ barba.hooks.afterEnter(data => {
 /*-----------------------------------------------------------------------------------*/
 
 document.addEventListener('DOMContentLoaded', () => {
-	initializeGSAPAndLenis()
 	initOnceFunctions()
 })
 
@@ -215,60 +203,77 @@ function reinitForBarba() {
 }
 
 function initOnceFunctions() {
+	initializeGSAPAndLenis()
 	initAsidePanels()
-	stickyHeader()
-	window.loader = new LoaderComponent()
+	state.loader.initializeLoader()
 }
 
 function initializeGSAPAndLenis() {
-	if (typeof gsap !== 'undefined') {
-		gsap.registerPlugin(ScrollTrigger)
-		gsap.config({
-			nullTargetWarn: false,
-			trialWarn: false,
-		})
-		ScrollTrigger.config({ ignoreMobileResize: true })
-
-		lenis = new Lenis({
-			lerp: 0.14,
-			direction: 'vertical',
-			smoothWheel: true,
-			smoothTouch: false,
-			touchMultiplier: 0,
-		})
-
-		lenis.on('scroll', ScrollTrigger.update)
-		gsap.ticker.add(time => {
-			lenis.raf(time * 1000)
-		})
-		gsap.ticker.lagSmoothing(0)
-		loader = new LoaderComponent()
-
-		initAnimations()
-		reinitForBarba()
-
-		ScrollTrigger.refresh()
-		lenis.resize()
-	} else {
-		setTimeout(initializeGSAPAndLenis, 50)
+	if (typeof gsap === 'undefined') {
+		console.warn('GSAP not loaded')
+		return
 	}
+
+	gsap.registerPlugin(ScrollTrigger)
+	gsap.config({
+		nullTargetWarn: false,
+		trialWarn: false,
+	})
+	ScrollTrigger.config({ ignoreMobileResize: true })
+
+	state.lenis = new Lenis({
+		lerp: 0.14,
+		direction: 'vertical',
+		smoothWheel: true,
+		smoothTouch: false,
+		touchMultiplier: 0,
+	})
+	window.lenis = state.lenis
+
+	state.lenis.on('scroll', ScrollTrigger.update)
+	gsap.ticker.add(time => state.lenis.raf(time * 1000))
+	gsap.ticker.lagSmoothing(0)
+	state.loader = new LoaderComponent()
+
+	initAnimations()
+	reinitForBarba()
+	ScrollTrigger.refresh()
+	state.lenis.resize()
 }
 
 function initAnimations() {
-	reller()
+	//reller()
 	initFadeAnimations()
 	initHeadingAnimations()
+
+	const hash = localStorage.getItem('scrollToHash')
+	if (hash) {
+		setTimeout(() => scrollToAnchor(hash), 200)
+		localStorage.removeItem('scrollToHash')
+	}
 }
 
 function reller() {
-	let loops = gsap.utils.toArray('.reeller').map((line, i) => {
-		const links = line.querySelectorAll('.reeller-item')
-		return horizontalLoop(links, {
+	gsap.utils.toArray('.reeller').map((line, i) => {
+		const items = line.querySelectorAll('.reeller-item')
+		const isReversed = i % 2 === 1
+
+		const tl = horizontalLoop(items, {
 			repeat: -1,
 			speed: 1.25,
-			reversed: i == 1 ? true : false,
+			reversed: isReversed,
 			invalidateOnRefresh: true,
-			paddingRight: parseFloat(gsap.getProperty(links[0], 'marginRight', 'px')),
+			paddingRight: parseFloat(gsap.getProperty(items[0], 'marginRight', 'px')),
+		})
+
+		ScrollTrigger.create({
+			trigger: line,
+			start: 'top bottom',
+			end: 'bottom top',
+			onEnter: () => tl.timeScale(isReversed ? -1 : 1),
+			onLeave: () => tl.timeScale(0),
+			onEnterBack: () => tl.timeScale(isReversed ? -1 : 1),
+			onLeaveBack: () => tl.timeScale(0),
 		})
 	})
 
@@ -378,7 +383,7 @@ function reller() {
 function initHeadingAnimations() {
 	class TextAnimator {
 		constructor(selector) {
-			this.elements = document.querySelectorAll(selector)
+			this.elements = gsap.utils.toArray(selector)
 			this.splits = []
 			this.triggers = []
 			this.init()

@@ -11,21 +11,24 @@
 }
 
 .modal-content {
-	@apply relative w-full pointer-events-auto transition-all duration-300 opacity-0 bg-white shadow-xl rounded-[11px] max-w-[627px] p-30 m-auto;
+	@apply relative w-full pointer-events-auto opacity-0 bg-white rounded-lg max-w-[422px] p-16 xl:p-24 m-auto border-border;
 }
 
 .modal-show .modal-content {
 	@apply !opacity-100;
 }
 
-.modal-close {
-	@apply absolute top-20 right-20 size-20 rounded-full bg-white hover:opacity-70 flex items-center justify-center z-[1001] border-0 text-black transition-all;
-}
-
 .modal-container {
-	@apply fixed flex overflow-y-auto max-h-full py-[40px] inset-0 transition-all duration-300 -translate-y-full opacity-0 pointer-events-none;
+	@apply fixed flex overflow-y-auto max-h-full py-[40px] inset-0 transition-transform duration-400 -translate-y-full opacity-0 pointer-events-none;
 }
 
 .modal-overlay {
-	@apply fixed inset-0 bg-black/85 backdrop-blur-[20px] opacity-0 invisible transition-opacity duration-300 z-[999];
+	@apply fixed inset-0 bg-black/25 backdrop-blur-[20px] opacity-0 invisible transition-opacity duration-600 
+	z-[999];
+}
+
+.modal-close {
+	@apply after:w-16 
+	before:w-16 
+	size-16 overflow-hidden rounded-full bg-white flex items-center justify-center z-[1001] border-0 text-dark-blue transition-all hover:opacity-70 before:content-[''] before:absolute before:h-[2px] before:bg-current before:rounded-[2px] before:rotate-45 before:transition-all before:duration-200 after:content-[''] after:absolute after:h-[2px] after:bg-current after:rounded-[2px] after:-rotate-45 after:transition-all after:duration-300;
 }

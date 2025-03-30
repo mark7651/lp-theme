@@ -19,6 +19,7 @@ Use it to make something cool, have fun, and share what you've learned.
 @plugin "@igorkowalczyk/is-browser";
 @plugin 'tailwind-scrollbar' {
 	nocompatible: true;
+	preferredstrategy: 'pseudoelements';
 }
 
 @import './assets/css/fonts.css' layer(base);
@@ -28,6 +29,9 @@ Use it to make something cool, have fun, and share what you've learned.
 @import './assets/css/ui/buttons.css' layer(base);
 @import './assets/css/ui/inputs.css' layer(base);
 @import './assets/css/ui/panels.css' layer(base);
+/* @import './assets/css/ui/modals.css' layer(base); */
+/* @import './assets/css/ui/tabs.css' layer(base); */
+/* @import './assets/css/ui/accordeon.css' layer(base); */
 /* @import './assets/css/ui/splide.css' layer(base); */
 
 @import './assets/css/components.css' layer(components);
@@ -94,8 +98,8 @@ Use it to make something cool, have fun, and share what you've learned.
 
 	--shadow-2xs: 0 1px #0000000d;
 	--shadow-xs: 0 1px 2px 0 #0000000d;
-	--shadow-sm: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
-	--shadow-md: 	0 0 10px 5px rgba(32, 247, 150, 0);
+	--shadow-sm: 0 16px 30px 0 rgba(0, 0, 0, 0.04);
+	--shadow-md: 0 0 10px 5px rgba(32, 247, 150, 0);
 	--shadow-lg: 0 10px 25px 0px #bbbbbb1a;
 	--shadow-xl: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
 	--shadow-2xl: 0 25px 50px -12px #00000040;
@@ -107,4 +111,14 @@ Use it to make something cool, have fun, and share what you've learned.
 	--animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
 	--animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	--animate-bounce: bounce 1s infinite;
+	--animate-fade-in: fade-in 1s ease;
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
 }

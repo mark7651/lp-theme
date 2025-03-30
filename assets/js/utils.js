@@ -15,14 +15,11 @@ function initAsidePanels() {
 		panel.classList.remove('panel-show')
 		document.body.classList.remove('panel-showed')
 		trigger?.classList.remove('active')
-		document.body.removeAttribute('style')
 
 		activePanel = null
 		activeTrigger = null
 
-		if (typeof lenis !== 'undefined') {
-			lenis.start()
-		}
+		compensateScrollbar.unlock()
 
 		overlay.removeEventListener('click', handleOverlayClick)
 	}
@@ -45,7 +42,7 @@ function initAsidePanels() {
 			closePanel(activePanel, activeTrigger)
 		}
 
-		compensateScrollbar()
+		compensateScrollbar.lock()
 
 		activePanel = panel
 		activeTrigger = trigger
@@ -124,6 +121,19 @@ function initAsidePanels() {
 	}
 }
 
+function hideOpenedPanels() {
+	const activePanels = document.querySelectorAll('.panel-show')
+	const activeBtnTriggers = document.querySelectorAll('.panel-trigger.active')
+
+	activePanels.forEach(function (panel) {
+		panel.classList.remove('panel-show')
+	})
+	activeBtnTriggers.forEach(function (trigger) {
+		trigger.classList.remove('active')
+	})
+	compensateScrollbar.unlock()
+}
+
 function initModals() {
 	const overlay = document.querySelector('.modal-overlay')
 	let activeModal = null
@@ -135,14 +145,11 @@ function initModals() {
 		modal.classList.remove('modal-show')
 		document.body.classList.remove('modal-opened')
 		trigger?.classList.remove('active')
-		document.body.removeAttribute('style')
+
+		compensateScrollbar.unlock()
 
 		activeModal = null
 		activeTrigger = null
-
-		if (typeof lenis !== 'undefined') {
-			lenis.start()
-		}
 
 		overlay.removeEventListener('click', handleOverlayClick)
 	}
@@ -165,7 +172,7 @@ function initModals() {
 			closeModal(activeModal, activeTrigger)
 		}
 
-		compensateScrollbar()
+		compensateScrollbar.lock()
 
 		activeModal = modal
 		activeTrigger = trigger
@@ -237,22 +244,6 @@ function initModals() {
 	}
 }
 
-function hideOpenedPanels() {
-	const activePanels = document.querySelectorAll('.panel-show')
-	const activeBtnTriggers = document.querySelectorAll('.panel-trigger.active')
-
-	activePanels.forEach(function (panel) {
-		panel.classList.remove('panel-show')
-	})
-	activeBtnTriggers.forEach(function (trigger) {
-		trigger.classList.remove('active')
-	})
-	if (lenis) {
-		lenis.start()
-	}
-	document.body.removeAttribute('style')
-}
-
 async function processLazyImages() {
 	await new Promise(resolve => setTimeout(resolve, 0))
 	const lazyImages = document.querySelectorAll('img[loading="lazy"]')
@@ -282,52 +273,63 @@ const setPagePositionTop = () => {
 }
 
 const getScrollbarWidth = () => {
-	const scrollDiv = document.createElement('div')
-	scrollDiv.style.width = '100px'
-	scrollDiv.style.height = '100px'
-	scrollDiv.style.overflow = 'scroll'
-	scrollDiv.style.position = 'absolute'
-	scrollDiv.style.top = '-9999px'
-	document.body.appendChild(scrollDiv)
-	const scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth
-	document.body.removeChild(scrollDiv)
-	return scrollbarWidth
+	return window.innerWidth - document.documentElement.clientWidth
 }
 
-const compensateScrollbar = () => {
+const compensateScrollbar = (function () {
 	const scrollbarWidth = getScrollbarWidth()
-	if (scrollbarWidth > 0) {
-		const header = document.querySelector('.header .container')
-		document.body.style.paddingRight = `${scrollbarWidth}px`
-		if (header && header.classList.contains('fixed')) {
-			header.style.paddingRight = `${scrollbarWidth}px`
-		}
+	const header = document.querySelector('.header')
+
+	return {
+		lock() {
+			if (lenis.isStopped && scrollbarWidth > 0) {
+				document.body.style.paddingRight = `${scrollbarWidth}px`
+				if (header) {
+					header.style.right = `${scrollbarWidth / 2}px`
+				}
+				lenis.stop()
+			}
+		},
+		unlock() {
+			document.body.removeAttribute('style')
+			if (header) {
+				header.removeAttribute('style')
+			}
+			lenis.start()
+		},
 	}
-}
+})()
 
 function lazyVideos() {
-	const lazyVideos = document.querySelectorAll('video.lazy')
+	const lazyVideos = [].slice.call(document.querySelectorAll('video.lazy'))
 
 	if ('IntersectionObserver' in window) {
-		const lazyVideoObserver = new IntersectionObserver((entries, observer) => {
-			entries.forEach(entry => {
-				if (entry.isIntersecting) {
-					const video = entry.target
-
-					Array.from(video.children).forEach(source => {
-						if (source.tagName === 'SOURCE' && source.dataset.src) {
-							source.src = source.dataset.src
+		const lazyVideoObserver = new IntersectionObserver(function (
+			entries,
+			observer
+		) {
+			entries.forEach(function (video) {
+				if (video.isIntersecting) {
+					for (var source in video.target.children) {
+						var videoSource = video.target.children[source]
+						if (
+							typeof videoSource.tagName === 'string' &&
+							videoSource.tagName === 'SOURCE'
+						) {
+							videoSource.src = videoSource.dataset.src
 						}
-					})
+					}
 
-					video.load()
-					video.classList.remove('lazy')
-					observer.unobserve(video)
+					video.target.load()
+					video.target.classList.remove('lazy')
+					lazyVideoObserver.unobserve(video.target)
 				}
 			})
 		})
 
-		lazyVideos.forEach(video => lazyVideoObserver.observe(video))
+		lazyVideos.forEach(function (lazyVideo) {
+			lazyVideoObserver.observe(lazyVideo)
+		})
 	}
 }
 
@@ -343,14 +345,11 @@ function scrollToAnchor(hash) {
 
 		if (window.lenis) {
 			lenis.scrollTo(top, {
-				duration: immediate ? 0 : 1.2,
-				easing: t => 1 - Math.pow(1 - t, 3),
+				duration: 0.4,
 			})
 		} else {
 			window.scrollTo({ top, behavior: 'smooth' })
 		}
-
-		history.replaceState(null, null, hash)
 	}
 }
 
@@ -479,19 +478,70 @@ function tabs() {
 	})
 }
 
-const stickyHeader = () => {
-	const header = document.querySelector('.header')
+const dropdown = () => {
+	const dropdownElements = document.querySelectorAll('.dropdown')
 
-	if (!header) return
+	window.addEventListener('click', e => {
+		dropdownElements.forEach(item => {
+			if (!item.contains(e.target)) {
+				item.classList.remove('active')
+				const svg = item.querySelector('.dropdown-input .caret')
+				if (svg) svg.classList.remove('rotate-180')
+			}
+		})
+	})
 
-	const headerHeight = header.offsetHeight
-	const threshold = headerHeight / 2
+	dropdownElements.forEach(item => {
+		const dropdownValue = item.querySelector('.dropdown-value')
+		const dropdownInput = item.querySelector('.dropdown-input')
+		const input = dropdownInput.querySelector('input')
+		const dropdownPanelOptions = item.querySelectorAll('.dropdown-panel li')
 
-	const toggleHeaderClass = () => {
-		header.classList.toggle('scrolled', window.scrollY > threshold)
-	}
-	window.addEventListener('scroll', toggleHeaderClass)
-	toggleHeaderClass()
+		dropdownInput.addEventListener('click', event => {
+			event.stopPropagation()
+			const isActive = item.classList.contains('active')
+			dropdownElements.forEach(otherItem => {
+				if (otherItem !== item) {
+					otherItem.classList.remove('active')
+					const otherSvg = otherItem.querySelector('.dropdown-input .caret')
+					if (otherSvg) otherSvg.classList.remove('rotate-180')
+				}
+			})
+			item.classList.toggle('active')
+			const svg = dropdownInput.querySelector('.caret')
+			if (svg) svg.classList.toggle('rotate-180', !isActive)
+		})
+
+		dropdownPanelOptions.forEach(option => {
+			option.addEventListener('click', event => {
+				event.stopPropagation()
+
+				let selectedValues = dropdownValue.value
+					? dropdownValue.value.split(',')
+					: []
+				const value = option.getAttribute('data-value')
+
+				if (selectedValues.includes(value)) {
+					selectedValues = selectedValues.filter(v => v !== value)
+					option.classList.remove('selected-option')
+					option.removeAttribute('aria-selected')
+				} else {
+					selectedValues.push(value)
+					option.classList.add('selected-option')
+					option.setAttribute('aria-selected', 'true')
+				}
+
+				dropdownValue.value = selectedValues.join(',')
+
+				const selectedNames = selectedValues.map(val =>
+					Array.from(dropdownPanelOptions)
+						.find(opt => opt.getAttribute('data-value') === val)
+						.textContent.trim()
+				)
+				input.value = selectedNames.length > 0 ? selectedNames.join(', ') : ''
+			})
+		})
+	})
 }
 
 function initSlider(selector, options = {}, customHandlers = {}) {
@@ -542,6 +592,7 @@ function initSlider(selector, options = {}, customHandlers = {}) {
 export {
 	accordeon,
 	debounce,
+	dropdown,
 	handleAnchorClick,
 	hideOpenedPanels,
 	initAsidePanels,
@@ -552,6 +603,5 @@ export {
 	processLazyImages,
 	scrollToAnchor,
 	setPagePositionTop,
-	stickyHeader,
 	tabs,
 }

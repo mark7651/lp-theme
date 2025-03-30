@@ -2,7 +2,7 @@
 	@apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-thumb-primary scrollbar-track-transparent;
 }
 html {
-	@apply antialiased select-none font-main text-[14px] md:text-[18px] xl:text-[var(--root-size)];
+	@apply antialiased select-none font-main text-[14px] md:text-[16px] xl:text-[var(--root-size)];
 	-webkit-font-smoothing: antialiased;
 	font-kerning: none;
 	font-variant-ligatures: none;
@@ -29,7 +29,7 @@ body {
 }
 
 main {
-	@apply min-h-[50vh];
+	@apply min-h-[70vh];
 }
 
 p {

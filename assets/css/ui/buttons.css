@@ -9,10 +9,6 @@
 	@apply max-sm:h-[40px];
 }
 
-.btn .aspect-square {
-	@apply rtl:scale-x-[-1];
-}
-
 .btn-secondary {
 	@apply text-black bg-secondary;
 }

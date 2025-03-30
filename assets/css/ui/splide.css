@@ -7,10 +7,6 @@
 	}
 }
 
-.splide {
-	@apply overflow-hidden;
-}
-
 .splide__track--draggable {
 	@apply select-none;
 }
@@ -32,8 +28,7 @@
 }
 
 .splide__list {
-	@apply flex h-full m-0 p-0 backface-hidden;
-	will-change: transform;
+	@apply flex h-full m-0 p-0 backface-hidden will-change-transform;
 }
 
 .splide.is-initialized:not(.is-active) .splide__list {
@@ -97,17 +92,19 @@
 }
 
 .splide__arrow {
-	@apply flex items-center justify-center p-0 absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer;
+	@apply flex items-center justify-center p-0 absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white text-black-secondary size-40 rounded-full aspect-square border border-border flex items-center justify-center hover:opacity-70;
 }
 
 .splide__arrow svg {
-	@apply size-16;
+	@apply size-26;
 }
 
 .splide__arrow svg path {
 	@apply fill-none;
 	stroke-miterlimit: 10;
 	stroke-linecap: round;
+	stroke-width: 2px;
+	stroke: rgba(30, 32, 61, 0.7);
 }
 
 .splide__arrow:hover:not(:disabled) {
@@ -123,7 +120,7 @@
 }
 
 .splide__arrow--prev {
-	@apply -left-20;
+	@apply -left-20 xl:-left-60 scale-x-[-1];
 }
 
 .splide__arrow--prev svg {
@@ -131,5 +128,15 @@
 }
 
 .splide__arrow--next {
-	@apply -right-20;
+	@apply -right-20 xl:-right-60 scale-x-[-1];
+}
+
+.splide__pagination {
+	@apply flex gap-8 items-center;
+}
+.splide__pagination__page {
+	@apply bg-white size-16 rounded-full aspect-square border border-border;
+}
+.splide__pagination__page.is-active {
+	@apply bg-primary;
 }

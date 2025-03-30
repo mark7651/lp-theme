@@ -54,5 +54,4 @@
 		<div class="loader-fill"></div>
 	</div>
 
-	<div class="layout">
-		<main id="app" data-barba="container">
+	<main id="app" data-barba="container" class="layout">

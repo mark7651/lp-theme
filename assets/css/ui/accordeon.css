@@ -1,0 +1,22 @@
+.accordeon {
+	@apply flex flex-col bg-white rounded-xl border border-border px-16 md:px-32 py-30;
+}
+.accordeon-item {
+	@apply py-24 border-b border-border last:border-b-0;
+}
+.accordeon-item__icon {
+	@apply transition-all;
+}
+.accordeon-item.active .accordeon-item__icon {
+	@apply rotate-180;
+}
+.accordeon-item__header {
+	@apply flex items-center gap-16 justify-between cursor-pointer transition-all;
+}
+.accordeon-item__description {
+	@apply h-auto overflow-hidden;
+	transition: max-height 0.5s ease;
+}
+.accordeon-item__description p {
+	@apply font-medium xl:text-[20px] mt-24;
+}
