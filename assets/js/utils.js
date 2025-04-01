@@ -479,69 +479,77 @@ function tabs() {
 }
 
 const dropdown = () => {
-	const dropdownElements = document.querySelectorAll('.dropdown')
+	const dropdownContainer = document.body
 
 	window.addEventListener('click', e => {
-		dropdownElements.forEach(item => {
+		document.querySelectorAll('.dropdown.active').forEach(item => {
 			if (!item.contains(e.target)) {
-				item.classList.remove('active')
-				const svg = item.querySelector('.dropdown-input .caret')
-				if (svg) svg.classList.remove('rotate-180')
+				closeDropdown(item)
 			}
 		})
 	})
 
-	dropdownElements.forEach(item => {
-		const dropdownValue = item.querySelector('.dropdown-value')
-		const dropdownInput = item.querySelector('.dropdown-input')
-		const input = dropdownInput.querySelector('input')
-		const dropdownPanelOptions = item.querySelectorAll('.dropdown-panel li')
+	dropdownContainer.addEventListener('click', event => {
+		const dropdownInput = event.target.closest('.dropdown-input')
+		const dropdownOption = event.target.closest('.dropdown-panel li')
 
-		dropdownInput.addEventListener('click', event => {
-			event.stopPropagation()
-			const isActive = item.classList.contains('active')
-			dropdownElements.forEach(otherItem => {
-				if (otherItem !== item) {
-					otherItem.classList.remove('active')
-					const otherSvg = otherItem.querySelector('.dropdown-input .caret')
-					if (otherSvg) otherSvg.classList.remove('rotate-180')
-				}
-			})
-			item.classList.toggle('active')
-			const svg = dropdownInput.querySelector('.caret')
-			if (svg) svg.classList.toggle('rotate-180', !isActive)
-		})
+		if (dropdownInput) {
+			const dropdown = dropdownInput.closest('.dropdown')
+			toggleDropdown(dropdown)
+		}
 
-		dropdownPanelOptions.forEach(option => {
-			option.addEventListener('click', event => {
-				event.stopPropagation()
-
-				let selectedValues = dropdownValue.value
-					? dropdownValue.value.split(',')
-					: []
-				const value = option.getAttribute('data-value')
-
-				if (selectedValues.includes(value)) {
-					selectedValues = selectedValues.filter(v => v !== value)
-					option.classList.remove('selected-option')
-					option.removeAttribute('aria-selected')
-				} else {
-					selectedValues.push(value)
-					option.classList.add('selected-option')
-					option.setAttribute('aria-selected', 'true')
-				}
-
-				dropdownValue.value = selectedValues.join(',')
-
-				const selectedNames = selectedValues.map(val =>
-					Array.from(dropdownPanelOptions)
-						.find(opt => opt.getAttribute('data-value') === val)
-						.textContent.trim()
-				)
-				input.value = selectedNames.length > 0 ? selectedNames.join(', ') : ''
-			})
-		})
+		if (dropdownOption) {
+			selectOption(dropdownOption)
+		}
 	})
+
+	function toggleDropdown(dropdown) {
+		const isActive = dropdown.classList.contains('active')
+		document.querySelectorAll('.dropdown.active').forEach(item => {
+			if (item !== dropdown) closeDropdown(item)
+		})
+
+		dropdown.classList.toggle('active')
+		const caret = dropdown.querySelector('.dropdown-input .caret')
+		if (caret) caret.classList.toggle('rotate-180', !isActive)
+	}
+
+	function closeDropdown(dropdown) {
+		dropdown.classList.remove('active')
+		const caret = dropdown.querySelector('.dropdown-input .caret')
+		if (caret) caret.classList.remove('rotate-180')
+	}
+
+	function selectOption(option) {
+		const dropdown = option.closest('.dropdown')
+		const dropdownValue = dropdown.querySelector('.dropdown-value')
+		const input = dropdown.querySelector('.dropdown-input input')
+		const options = dropdown.querySelectorAll('.dropdown-panel li')
+
+		let selectedValues = dropdownValue.value
+			? dropdownValue.value.split(',')
+			: []
+		const value = option.getAttribute('data-value')
+
+		if (selectedValues.includes(value)) {
+			selectedValues = selectedValues.filter(v => v !== value)
+			option.classList.remove('selected-option')
+			option.removeAttribute('aria-selected')
+		} else {
+			selectedValues.push(value)
+			option.classList.add('selected-option')
+			option.setAttribute('aria-selected', 'true')
+		}
+
+		dropdownValue.value = selectedValues.join(',')
+
+		const selectedNames = selectedValues.map(val =>
+			Array.from(options)
+				.find(opt => opt.getAttribute('data-value') === val)
+				.textContent.trim()
+		)
+		input.value = selectedNames.length > 0 ? selectedNames.join(', ') : ''
+	}
 }
 
 function initSlider(selector, options = {}, customHandlers = {}) {

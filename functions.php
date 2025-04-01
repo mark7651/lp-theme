@@ -138,21 +138,33 @@ if (! function_exists('lp_enqueue_scripts')) {
 
 		wp_enqueue_script_module('app-script', LP_SCRIPTS . '/app.js', array(), true);
 
-		if (is_page_template('templates/testimonials.php') && get_field('enable_testimonials', 'option')) {
-			wp_enqueue_script('testimonials-js', LP_SCRIPTS . '/testimonials.js');
-		}
+		$scripts = [
+			'testimonials-js' => [
+				'condition' => is_page_template('templates/testimonials.php') && get_field('enable_testimonials', 'option'),
+				'src'       => LP_SCRIPTS . '/testimonials.js'
+			],
+			'slider-js' => [
+				'condition' => get_field('enable_slider', 'option'),
+				'src'       => LP_SCRIPTS . '/splide.js'
+			],
+			'fslightbox-js' => [
+				'condition' => get_field('lightbox_enable', 'option'),
+				'src'       => LP_SCRIPTS . '/fslightbox.js'
+			],
+			'smooth-scrollbar-js' => [
+				'condition' => get_field('smooth_scrollbar', 'option'),
+				'src'       => LP_SCRIPTS . '/smooth-scrollbar.js'
+			],
+			'gsap-js' => [
+				'condition' => get_field('gsap_enable', 'option'),
+				'src'       => LP_SCRIPTS . '/gsap.js'
+			],
+		];
 
-		if (get_field('enable_slider', 'option')) {
-			wp_enqueue_script('slider-js', LP_SCRIPTS . '/splide.js');
-		}
-		if (get_field('lightbox_enable', 'option')) {
-			wp_enqueue_script('fslightbox-js', LP_SCRIPTS . '/fslightbox.js');
-		}
-		if (get_field('smooth_scrollbar', 'option')) {
-			wp_enqueue_script('smooth-scrollbar-js', LP_SCRIPTS . '/smooth-scrollbar.js');
-		}
-		if (get_field('gsap_enable', 'option')) {
-			wp_enqueue_script('gsap-js', LP_SCRIPTS . '/gsap.js');
+		foreach ($scripts as $handle => $data) {
+			if ($data['condition']) {
+				wp_enqueue_script($handle, $data['src'], array(), null, true);
+			}
 		}
 	}
 }
