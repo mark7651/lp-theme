@@ -338,10 +338,13 @@ class LP_Forms
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $fields['name'] . ' <' . $fields['email'] . '>',
-            'Reply-To: ' . $fields['email']
         ];
-
+        if (!empty($fields['email'])) {
+            $headers[] = 'From: ' . $fields['name'] . ' <' . $fields['email'] . '>';
+            $headers[] = 'Reply-To: ' . $fields['email'];
+        } else {
+            $headers[] = 'From: ' . $fields['name'] . ' <no-reply@yourdomain.com>';
+        }
         $attachments = self::process_attachments();
         $recipients = email_recipients();
 

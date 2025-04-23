@@ -4,15 +4,16 @@
 	"description": "lptheme",
 	"scripts": {
 		"watch": "npx @tailwindcss/cli -i ./tailwind.css -o ./style.css --watch",
-		"browser-sync": "browser-sync start --proxy 'lptheme.local' --files '**/*.php, **/*.css, **/**/*.css, **/*.js'"
+		"minify": "npx tailwindcss -i ./tailwind.css -o ./style.min.css --minify",
+		"browser-sync": "browser-sync start --proxy 'obra.local' --files '**/*.php, **/*.css, **/**/*.css, **/*.js'"
 	},
 	"devDependencies": {
-		"browser-sync": "^3.0.3",
+		"browser-sync": "latest",
 		"tailwind-scrollbar": "^4.0.1",
-		"tailwindcss": "^4.0.4"
+		"tailwindcss": "^4.1.4"
 	},
 	"dependencies": {
 		"@igorkowalczyk/is-browser": "^5.1.0",
-		"@tailwindcss/cli": "^4.0.4"
+		"@tailwindcss/cli": "^4.1.4"
 	}
 }

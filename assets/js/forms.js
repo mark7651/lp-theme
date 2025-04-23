@@ -48,12 +48,31 @@ class LPForm {
 	setupFieldListeners() {
 		Array.from(this.form.elements)
 			.filter(el => el.type !== 'submit')
-			.forEach(el =>
+			.forEach(el => {
 				el.addEventListener('focus', () => {
 					this.state.formFocused = true
 					this.clearFieldError(el)
 				})
-			)
+				el.addEventListener('blur', () => {
+					this.validateAndStyleField(el)
+				})
+			})
+	}
+
+	validateAndStyleField(field) {
+		const valid = this.validateField(field)
+
+		if (valid) {
+			field.classList.remove('error')
+			field.classList.add('valid')
+			field.setAttribute('aria-invalid', 'false')
+			this.state.errors.delete(field.name)
+		} else {
+			field.classList.add('error')
+			field.classList.remove('valid')
+			field.setAttribute('aria-invalid', 'true')
+			this.state.errors.set(field.name, field)
+		}
 	}
 
 	setState(state) {
@@ -105,22 +124,23 @@ class LPForm {
 	validateField(field) {
 		if (!field.required && !field.value) return true
 
-		if (field.required && !field.value) return false
-
 		switch (field.type) {
 			case 'checkbox':
-				return !field.required || field.checked
-			case 'tel':
-				return !field.required || field.value.length !== 13
+				return field.checked
+			case 'tel': {
+				const cleaned = field.value.replace(/[^\d+]/g, '')
+				const digitsOnly = cleaned.replace(/\D/g, '')
+
+				return digitsOnly.length >= 10 && digitsOnly.length <= 15
+			}
 			case 'email':
-				return !field.value || this.emailPattern.test(field.value)
-			case 'radio':
-				return (
-					!field.required ||
-					!!document.querySelector(`[name=${field.name}]:checked`)
-				)
+				return this.emailPattern.test(field.value)
+			case 'radio': {
+				const radios = this.form.querySelectorAll(`[name="${field.name}"]`)
+				return Array.from(radios).some(r => r.checked)
+			}
 			default:
-				return true
+				return !!field.value.trim()
 		}
 	}
 
@@ -129,24 +149,16 @@ class LPForm {
 		let isValid = true
 
 		Array.from(this.form.elements).forEach(field => {
-			if (!this.validateField(field)) {
-				this.state.errors.set(field.name, field)
-				field.classList.add('error')
-				field.classList.remove('valid')
+			if (field.type === 'submit') return
+
+			this.validateAndStyleField(field)
+			if (field.classList.contains('error')) {
 				isValid = false
-			} else {
-				field.classList.remove('error')
-				field.classList.add('valid')
 			}
 		})
 
 		if (!isValid) {
 			this.setState('error')
-			this.state.errors.forEach(field => {
-				field.addEventListener('focus', () => this.clearFieldError(field), {
-					once: true,
-				})
-			})
 			return false
 		}
 

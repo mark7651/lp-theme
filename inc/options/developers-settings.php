@@ -1,8 +1,8 @@
-<?php if ( ! defined('LP_THEME_DIR')) exit('No direct script access allowed');
+<?php if (! defined('LP_THEME_DIR')) exit('No direct script access allowed');
 
 // developers general options
 
-if( function_exists('acf_add_local_field_group') ):
+if (function_exists('acf_add_local_field_group')):
 
     acf_add_local_field_group(array(
         'key' => 'group_5f563f5302920',
@@ -249,7 +249,7 @@ if( function_exists('acf_add_local_field_group') ):
                 'new_lines' => '',
                 'esc_html' => 0,
             ),
-           
+
             array(
                 'key' => 'field_facebookdnvkj345',
                 'label' => '<span class="dashicons dashicons-facebook-alt"></span> Facebook',
@@ -448,7 +448,7 @@ if( function_exists('acf_add_local_field_group') ):
                 'ui' => 1,
                 'ui_on_text' => 'Вкл',
                 'ui_off_text' => 'Выкл',
-            ),       
+            ),
 
             array(
                 'key' => 'field_restdsd53e8',
@@ -525,7 +525,7 @@ if( function_exists('acf_add_local_field_group') ):
                 'esc_html' => 0,
             ),
 
-            array (
+            array(
                 'key' => 'field_njkbkkfonts',
                 'label' => 'Предзагрузка шрифта',
                 'name' => 'fonts_preload',
@@ -598,7 +598,7 @@ if( function_exists('acf_add_local_field_group') ):
                     ),
                 ),
             ),
-            
+
             array(
                 'key' => 'field_adh34d78f',
                 'label' => '<span class="dashicons dashicons-admin-plugins"></span> Компоненты',
@@ -658,6 +658,26 @@ if( function_exists('acf_add_local_field_group') ):
                 'key' => 'field_smooodgb8e38',
                 'label' => 'Smooth Scrollbar',
                 'name' => 'smooth_scrollbar',
+                'type' => 'true_false',
+                'instructions' => '',
+                'required' => 0,
+                'conditional_logic' => 0,
+                'wrapper' => array(
+                    'width' => '',
+                    'class' => '',
+                    'id' => '',
+                ),
+                'message' => '',
+                'default_value' => 0,
+                'ui' => 1,
+                'ui_on_text' => 'Вкл',
+                'ui_off_text' => 'Выкл',
+            ),
+
+            array(
+                'key' => 'field_sgsap38sdvnlk',
+                'label' => 'GSAP',
+                'name' => 'gsap_enable',
                 'type' => 'true_false',
                 'instructions' => '',
                 'required' => 0,
@@ -839,7 +859,7 @@ if( function_exists('acf_add_local_field_group') ):
                 'append' => '',
                 'maxlength' => '',
             ),
-           
+
             array(
                 'key' => 'field_5f51343b0d78f',
                 'label' => '<span class="dashicons dashicons-admin-users"></span> Админка',
@@ -1282,27 +1302,132 @@ if( function_exists('acf_add_local_field_group') ):
         'active' => true,
         'description' => '',
     ));
-    
-    endif;
+
+endif;
 
 /* Conditional Logic to display field if an options page field is set */
-function lp_conditional_phone_1($field) {if(get_field('enable_phone_1', 'option')){return $field;}else{return;}}
-function lp_conditional_phone_2($field) {if(get_field('enable_phone_2', 'option')){return $field;}else{return;}}
-function lp_conditional_phone_3($field) {if(get_field('enable_phone_3', 'option')){return $field;}else{return;}}
-function lp_conditional_phone_4($field) {if(get_field('enable_phone_4', 'option')){return $field;}else{return;}}
-function lp_conditional_email($field) {if(get_field('enable_email', 'option')){return $field;}else{return;}}
-function lp_conditional_address($field) {if(get_field('enable_address', 'option')){return $field;}else{return;}}
-function lp_conditional_working_hours($field) {if(get_field('enable_working_hours', 'option')){return $field;}else{return;}}
+function lp_conditional_phone_1($field)
+{
+    if (get_field('enable_phone_1', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_phone_2($field)
+{
+    if (get_field('enable_phone_2', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_phone_3($field)
+{
+    if (get_field('enable_phone_3', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_phone_4($field)
+{
+    if (get_field('enable_phone_4', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_email($field)
+{
+    if (get_field('enable_email', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_address($field)
+{
+    if (get_field('enable_address', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_working_hours($field)
+{
+    if (get_field('enable_working_hours', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
 
-function lp_conditional_facebook($field) {if(get_field('enable_facebook', 'option')){return $field;}else{return;}}
-function lp_conditional_twitter($field) {if(get_field('enable_twitter', 'option')){return $field;}else{return;}}
-function lp_conditional_telegram($field) {if(get_field('enable_telegram', 'option')){return $field;}else{return;}}
-function lp_conditional_instagram($field) {if(get_field('enable_instagram', 'option')){return $field;}else{return;}}
-function lp_conditional_vk($field) {if(get_field('enable_vk', 'option')){return $field;}else{return;}}
-function lp_conditional_linkedin($field) {if(get_field('enable_linkedin', 'option')){return $field;}else{return;}}
-function lp_conditional_skype($field) {if(get_field('enable_skype', 'option')){return $field;}else{return;}}
-function lp_conditional_viber($field) {if(get_field('enable_viber', 'option')){return $field;}else{return;}}
-    
+function lp_conditional_facebook($field)
+{
+    if (get_field('enable_facebook', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_twitter($field)
+{
+    if (get_field('enable_twitter', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_telegram($field)
+{
+    if (get_field('enable_telegram', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_instagram($field)
+{
+    if (get_field('enable_instagram', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_vk($field)
+{
+    if (get_field('enable_vk', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_linkedin($field)
+{
+    if (get_field('enable_linkedin', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_skype($field)
+{
+    if (get_field('enable_skype', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_viber($field)
+{
+    if (get_field('enable_viber', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+
 add_filter('acf/prepare_field/key=field_5f6dcb4612d7d', 'lp_conditional_phone_1', 20);
 add_filter('acf/prepare_field/key=field_5f6dcb7978a2d', 'lp_conditional_phone_2', 20);
 add_filter('acf/prepare_field/key=field_5f6dcb7e78a2e', 'lp_conditional_phone_3', 20);

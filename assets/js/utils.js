@@ -3,6 +3,14 @@ const isMob =
 		navigator.userAgent
 	)
 
+const isTouchDevice = () => {
+	return (
+		'ontouchstart' in window ||
+		navigator.maxTouchPoints > 0 ||
+		navigator.msMaxTouchPoints > 0
+	)
+}
+
 function initAsidePanels() {
 	const panelFill = document.querySelector('.panel-fill')
 	const overlay = document.querySelector('.overlay')
@@ -20,7 +28,6 @@ function initAsidePanels() {
 		activeTrigger = null
 
 		compensateScrollbar.unlock()
-
 		overlay.removeEventListener('click', handleOverlayClick)
 	}
 
@@ -83,7 +90,15 @@ function initAsidePanels() {
 		openPanel(panel, trigger)
 	}
 
-	// Initialize
+	function closeAllPanels() {
+		const openPanels = document.querySelectorAll('.panel-show')
+		openPanels.forEach(panel => {
+			const id = panel.getAttribute('id')
+			const trigger = document.querySelector(`[data-panel="${id}"].active`)
+			closePanel(panel, trigger)
+		})
+	}
+
 	function init() {
 		document.removeEventListener('click', handlePanelTriggerClick)
 		document.addEventListener('click', handlePanelTriggerClick)
@@ -118,20 +133,8 @@ function initAsidePanels() {
 		openPanel,
 		destroy,
 		closePanelById,
+		closeAllPanels,
 	}
-}
-
-function hideOpenedPanels() {
-	const activePanels = document.querySelectorAll('.panel-show')
-	const activeBtnTriggers = document.querySelectorAll('.panel-trigger.active')
-
-	activePanels.forEach(function (panel) {
-		panel.classList.remove('panel-show')
-	})
-	activeBtnTriggers.forEach(function (trigger) {
-		trigger.classList.remove('active')
-	})
-	compensateScrollbar.unlock()
 }
 
 function initModals() {
@@ -285,7 +288,7 @@ const compensateScrollbar = (function () {
 			if (lenis.isStopped && scrollbarWidth > 0) {
 				document.body.style.paddingRight = `${scrollbarWidth}px`
 				if (header) {
-					header.style.right = `${scrollbarWidth / 2}px`
+					//header.style.marginRight = `${scrollbarWidth / 2}px`
 				}
 				lenis.stop()
 			}
@@ -333,24 +336,30 @@ function lazyVideos() {
 	}
 }
 
-function scrollToAnchor(hash) {
-	if (!hash) return
+function scrollToAnchor() {
+	const anchorLinks = document.querySelectorAll('a[href*="#"]')
 
-	const target = document.querySelector(hash)
-	const header = document.querySelector('.header')
-	const headerHeight = header ? header.offsetHeight : 0
-	if (target) {
-		const top =
-			target.getBoundingClientRect().top + window.scrollY - headerHeight
+	anchorLinks.forEach(link => {
+		link.addEventListener('click', e => {
+			e.preventDefault()
 
-		if (window.lenis) {
-			lenis.scrollTo(top, {
-				duration: 0.4,
-			})
-		} else {
-			window.scrollTo({ top, behavior: 'smooth' })
-		}
-	}
+			const targetId = link.getAttribute('href').substring(1)
+			const targetElement = document.getElementById(targetId)
+
+			if (targetElement) {
+				targetElement.scrollIntoView({
+					behavior: 'smooth',
+					block: 'start',
+				})
+
+				// Update URL without jumping
+				history.pushState(null, null, `#${targetId}`)
+
+				const asidePanels = initAsidePanels()
+				asidePanels.closeAllPanels()
+			}
+		})
+	})
 }
 
 function handleAnchorClick(event) {
@@ -389,42 +398,41 @@ function handleAnchorClick(event) {
 }
 
 function accordeon() {
-	const tabs = document.querySelectorAll('.accordeon-item')
+	const container = document.querySelector('.accordeon')
 	const descriptions = document.querySelectorAll('.accordeon-item__description')
 
-	tabs.forEach(function (element) {
-		element.addEventListener('click', toggleItem)
-	})
+	descriptions.forEach(initHeight)
 
-	descriptions.forEach(function (element) {
-		initHeight(element)
-	})
-
-	tabs.forEach(function (tab) {
-		if (tab.classList.contains('active')) {
-			const descriptionContainer = tab.querySelector(
-				'.accordeon-item__description'
-			)
-			const descriptionHeight = descriptionContainer.getAttribute('data-height')
-			descriptionContainer.style.maxHeight = `${descriptionHeight}px`
-		}
-	})
-
-	function toggleItem() {
-		let siblings = getSiblings(this)
-		let descriptionContainer = this.querySelector(
+	const activeTab = container.querySelector('.accordeon-item.active')
+	if (activeTab) {
+		const descriptionContainer = activeTab.querySelector(
 			'.accordeon-item__description'
 		)
-		let descriptionHeight = descriptionContainer.getAttribute('data-height')
-		this.classList.toggle('active')
+		const descriptionHeight = descriptionContainer.getAttribute('data-height')
+		descriptionContainer.style.maxHeight = `${descriptionHeight}px`
+	}
+
+	container.addEventListener('click', function (event) {
+		const tab = event.target.closest('.accordeon-item')
+		if (!tab || !container.contains(tab)) return
+
+		toggleItem(tab)
+	})
+
+	function toggleItem(tab) {
+		const siblings = getSiblings(tab)
+		const descriptionContainer = tab.querySelector(
+			'.accordeon-item__description'
+		)
+		const descriptionHeight = descriptionContainer.getAttribute('data-height')
+
+		const isActive = tab.classList.contains('active')
 
 		closeDescriptions(descriptions)
+		siblings.forEach(sibling => sibling.classList.remove('active'))
+		tab.classList.toggle('active')
 
-		siblings.forEach(function (sibling) {
-			sibling.classList.remove('active')
-		})
-
-		if (this.classList.contains('active')) {
+		if (!isActive) {
 			descriptionContainer.style.maxHeight = `${descriptionHeight}px`
 		} else {
 			descriptionContainer.style.maxHeight = 0
@@ -432,26 +440,20 @@ function accordeon() {
 	}
 
 	function initHeight(item) {
-		let height = item.offsetHeight
+		const height = item.offsetHeight
 		item.setAttribute('data-height', height)
 		item.style.maxHeight = 0
 	}
 
 	function closeDescriptions(descriptionList) {
-		descriptionList.forEach(function (element) {
-			element.style.maxHeight = 0
-		})
+		descriptionList.forEach(el => (el.style.maxHeight = 0))
 	}
 
 	function getSiblings(element) {
-		let siblings = new Array()
-
-		let sibling = element.parentNode.firstChild
-		for (; sibling; sibling = sibling.nextSibling) {
-			if (sibling.nodeType !== 1 || sibling === element) continue
-			siblings.push(sibling)
-		}
-		return siblings
+		return [...element.parentNode.children].filter(
+			sibling =>
+				sibling !== element && sibling.classList.contains('accordeon-item')
+		)
 	}
 }
 
@@ -597,19 +599,35 @@ function initSlider(selector, options = {}, customHandlers = {}) {
 	}
 }
 
+const stickyHeader = () => {
+	const header = document.querySelector('.header')
+
+	if (!header) return
+
+	const headerHeight = header.offsetHeight
+	const threshold = headerHeight / 3
+
+	const toggleHeaderClass = () => {
+		header.classList.toggle('scrolled', window.scrollY > threshold)
+	}
+	window.addEventListener('scroll', toggleHeaderClass)
+	toggleHeaderClass()
+}
+
 export {
 	accordeon,
 	debounce,
 	dropdown,
 	handleAnchorClick,
-	hideOpenedPanels,
 	initAsidePanels,
 	initModals,
 	initSlider,
 	isMob,
+	isTouchDevice,
 	lazyVideos,
 	processLazyImages,
 	scrollToAnchor,
 	setPagePositionTop,
+	stickyHeader,
 	tabs,
 }

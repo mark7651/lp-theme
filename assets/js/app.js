@@ -180,6 +180,9 @@ barba.hooks.beforeEnter(({ current, next }) => {
 barba.hooks.afterEnter(data => {
 	state.lenis.resize()
 	initAnimations()
+	if (ScrollTrigger) {
+		ScrollTrigger.refresh()
+	}
 })
 
 /*-----------------------------------------------------------------------------------*/
@@ -197,9 +200,6 @@ function reinitForBarba() {
 	new LPForm('form-contact')
 	window.addEventListener('load', processLazyImages)
 	document.addEventListener('click', handleAnchorClick)
-	if (ScrollTrigger) {
-		ScrollTrigger.refresh()
-	}
 }
 
 function initOnceFunctions() {
@@ -380,70 +380,6 @@ function reller() {
 	}
 }
 
-function initHeadingAnimations() {
-	class TextAnimator {
-		constructor(selector) {
-			this.elements = gsap.utils.toArray(selector)
-			this.splits = []
-			this.triggers = []
-			this.init()
-		}
-
-		init() {
-			this.elements.forEach(element => {
-				element.setAttribute('aria-label', element.textContent)
-				const split = new SplitType(element, {
-					types: 'words, chars',
-					tagName: 'span',
-				})
-				gsap.set(element, { autoAlpha: 1 })
-
-				this.splits.push(split)
-
-				const initialState = {
-					opacity: 0,
-					y: 30,
-					transformOrigin: '0% 50%',
-					// filter: 'blur(10px)',
-				}
-
-				gsap.set(split.chars, initialState)
-
-				const tl = gsap
-					.timeline({
-						paused: true,
-						defaults: {
-							duration: 0.6,
-							ease: 'slow(0.7,0.7,false)',
-						},
-					})
-					.to(split.chars, {
-						opacity: 1,
-						y: 0,
-						stagger: 0.02,
-					})
-
-				const trigger = ScrollTrigger.create({
-					trigger: element,
-					start: 'top 90%',
-					// scrub: true,
-					toggleActions: 'play none none reverse',
-					animation: tl,
-				})
-				this.triggers.push(trigger)
-			})
-		}
-
-		destroy() {
-			this.splits.forEach(split => split.revert())
-			this.triggers.forEach(trigger => trigger.kill())
-			this.splits = []
-			this.triggers = []
-		}
-	}
-	new TextAnimator('.animated-heading')
-}
-
 function initFadeAnimations() {
 	if (typeof gsap === 'undefined') {
 		console.warn('GSAP not loaded')
@@ -488,4 +424,98 @@ function initFadeAnimations() {
 	return () => {
 		triggers.forEach(trigger => trigger.kill())
 	}
+}
+
+function initHeadingAnimations(selector = '[scrub-text]', config = {}) {
+	class TextAnimator {
+		constructor(selector, config) {
+			this.selector = selector
+			this.config = Object.assign(
+				{
+					x: 0,
+					duration: 0.6,
+					ease: 'power2.out',
+					staggerEach: 0,
+					staggerAmount: 0.8,
+					start: 'top 80%',
+					//end: 'bottom 60%',
+					//scrub: true,
+				},
+				config
+			)
+			this.elements = gsap.utils.toArray(selector)
+			this.splits = []
+			this.triggers = []
+			this.init()
+		}
+
+		init() {
+			if (typeof SplitType === 'undefined') {
+				console.warn('SplitType is not loaded.')
+				return
+			}
+
+			this.elements.forEach(element => {
+				element.setAttribute('aria-label', element.textContent)
+
+				const split = new SplitType(element, {
+					types: 'words, chars',
+					tagName: 'span',
+				})
+				this.splits.push(split)
+
+				const tl = gsap
+					.timeline({
+						paused: true,
+						defaults: {
+							duration: this.config.duration,
+							ease: this.config.ease,
+						},
+					})
+					.from(split.chars, {
+						opacity: 0,
+						x: this.config.y,
+						stagger: {
+							each: this.config.staggerEach,
+							amount: this.config.staggerAmount,
+						},
+					})
+
+				const trigger = ScrollTrigger.create({
+					trigger: element,
+					start: this.config.start,
+					end: this.config.end,
+					scrub: this.config.scrub,
+					toggleActions: 'play none none reverse',
+					animation: tl,
+				})
+
+				this.triggers.push(trigger)
+			})
+		}
+
+		destroy() {
+			this.splits.forEach(split => split.revert())
+			this.triggers.forEach(trigger => trigger.kill())
+			this.splits = []
+			this.triggers = []
+		}
+	}
+
+	return new TextAnimator(selector, config)
+}
+
+function addClassOnViewport() {
+	const blocks = document.querySelectorAll('[viewport-check]')
+
+	blocks.forEach(block => {
+		ScrollTrigger.create({
+			trigger: block,
+			start: 'top 70%',
+			once: true,
+			onEnter: () => {
+				block.classList.add('in-viewport')
+			},
+		})
+	})
 }
