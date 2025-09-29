@@ -341,142 +341,215 @@ function scrollToAnchor() {
 
 	anchorLinks.forEach(link => {
 		link.addEventListener('click', e => {
-			e.preventDefault()
+			const href = link.getAttribute('href')
+			const hashIndex = href.indexOf('#')
+			if (hashIndex === -1) return
 
-			const targetId = link.getAttribute('href').substring(1)
-			const targetElement = document.getElementById(targetId)
+			const hash = href.slice(hashIndex)
+			const targetId = hash.slice(1)
+			const linkPath = href.slice(0, hashIndex)
+			const currentPath = window.location.pathname
+			localStorage.setItem('barba-scroll-anchor', hash)
 
-			if (targetElement) {
-				targetElement.scrollIntoView({
-					behavior: 'smooth',
-					block: 'start',
-				})
+			if (!linkPath || linkPath === currentPath || href.startsWith('#')) {
+				e.preventDefault()
 
-				// Update URL without jumping
-				history.pushState(null, null, `#${targetId}`)
+				const scrollTo = () => {
+					if (!targetId || hash === '#' || hash === '#top') {
+						scrollWithLenis(0)
+					} else {
+						const target = document.getElementById(targetId)
+						if (target) scrollWithLenis(target)
+					}
+				}
 
-				const asidePanels = initAsidePanels()
-				asidePanels.closeAllPanels()
+				handleScrollWithPanels(scrollTo)
 			}
 		})
 	})
-}
 
-function handleAnchorClick(event) {
-	const link = event.target.closest('a')
-	if (!link) return
-
-	const href = link.getAttribute('href')
-	if (
-		!href ||
-		link.target === '_blank' ||
-		href.startsWith('mailto:') ||
-		href.startsWith('tel:')
-	)
-		return
-
-	const currentLang = document.documentElement.lang
-	const newLang = link.getAttribute('hreflang')
-
-	if (newLang && newLang !== currentLang) {
-		event.preventDefault()
-		window.location.href = href
-		return
+	function scrollWithLenis(target) {
+		if (window.lenis) {
+			window.lenis.scrollTo(target, { duration: 1.2, offset: 0 })
+		} else if (typeof target === 'number') {
+			window.scrollTo({ top: target, behavior: 'smooth' })
+		} else {
+			target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		}
 	}
 
-	const [url, hash] = href.split('#')
+	function handleScrollWithPanels(callback) {
+		try {
+			const asidePanels = initAsidePanels?.()
+			const isPanelOpen = document.body.classList.contains('panel-showed')
 
-	if (hash && (url === '' || url === window.location.pathname)) {
-		event.preventDefault()
-		scrollToAnchor(`#${hash}`)
-		return
+			if (isPanelOpen && asidePanels?.closeAllPanels) {
+				asidePanels.closeAllPanels()
+				setTimeout(() => {
+					if (window.lenis) window.lenis.start()
+					setTimeout(callback, 100)
+				}, 100)
+			} else {
+				callback()
+			}
+		} catch (e) {
+			console.warn('Panel system not available, scrolling directly')
+			callback()
+		}
+	}
+	const localHash = localStorage.getItem('barba-scroll-anchor')
+	if (localHash) {
+		const targetId = localHash.slice(1)
+		const target = document.getElementById(targetId)
+		if (target) {
+			if (window.lenis) window.lenis.start()
+			scrollWithLenis(target)
+		}
+		localStorage.removeItem('barba-scroll-anchor')
 	}
 
-	if (hash) {
-		localStorage.setItem('scrollToHash', `#${hash}`)
+	if (window.location.hash) {
+		setTimeout(() => {
+			const targetId = window.location.hash.slice(1)
+			const target = document.getElementById(targetId)
+			if (target) {
+				if (window.lenis) window.lenis.start()
+				scrollWithLenis(target)
+			}
+		}, 300)
 	}
 }
 
 function accordeon() {
-	const container = document.querySelector('.accordeon')
-	const descriptions = document.querySelectorAll('.accordeon-item__description')
+	const accordions = document.querySelectorAll('.accordeon')
+	if (!accordions.length) return
 
-	descriptions.forEach(initHeight)
-
-	const activeTab = container.querySelector('.accordeon-item.active')
-	if (activeTab) {
-		const descriptionContainer = activeTab.querySelector(
-			'.accordeon-item__description'
-		)
-		const descriptionHeight = descriptionContainer.getAttribute('data-height')
-		descriptionContainer.style.maxHeight = `${descriptionHeight}px`
-	}
-
-	container.addEventListener('click', function (event) {
-		const tab = event.target.closest('.accordeon-item')
-		if (!tab || !container.contains(tab)) return
-
-		toggleItem(tab)
-	})
-
-	function toggleItem(tab) {
-		const siblings = getSiblings(tab)
-		const descriptionContainer = tab.querySelector(
-			'.accordeon-item__description'
-		)
-		const descriptionHeight = descriptionContainer.getAttribute('data-height')
-
-		const isActive = tab.classList.contains('active')
-
-		closeDescriptions(descriptions)
-		siblings.forEach(sibling => sibling.classList.remove('active'))
-		tab.classList.toggle('active')
-
-		if (!isActive) {
-			descriptionContainer.style.maxHeight = `${descriptionHeight}px`
-		} else {
-			descriptionContainer.style.maxHeight = 0
+	accordions.forEach(container => {
+		const existingListener = container.accordionListener
+		if (existingListener) {
+			container.removeEventListener('click', existingListener)
 		}
-	}
 
-	function initHeight(item) {
-		const height = item.offsetHeight
-		item.setAttribute('data-height', height)
-		item.style.maxHeight = 0
-	}
-
-	function closeDescriptions(descriptionList) {
-		descriptionList.forEach(el => (el.style.maxHeight = 0))
-	}
-
-	function getSiblings(element) {
-		return [...element.parentNode.children].filter(
-			sibling =>
-				sibling !== element && sibling.classList.contains('accordeon-item')
+		const descriptions = container.querySelectorAll(
+			'.accordeon-item__description'
 		)
-	}
+
+		descriptions.forEach(desc => {
+			desc.style.maxHeight = ''
+			desc.dataset.height = ''
+		})
+
+		descriptions.forEach(desc => {
+			desc.style.maxHeight = '0px'
+		})
+
+		setTimeout(() => {
+			const activeItems = container.querySelectorAll('.accordeon-item.active')
+			activeItems.forEach(item => {
+				const descriptionContainer = item.querySelector(
+					'.accordeon-item__description'
+				)
+				if (descriptionContainer) {
+					descriptionContainer.style.maxHeight = 'none'
+					descriptionContainer.style.visibility = 'hidden'
+					descriptionContainer.offsetHeight
+
+					const height = descriptionContainer.scrollHeight
+
+					descriptionContainer.style.visibility = ''
+					descriptionContainer.style.maxHeight = `${height}px`
+				}
+			})
+		}, 10)
+
+		function accordionClickHandler(event) {
+			const header = event.target.closest('.accordeon-item__header')
+			if (!header) return
+
+			const link = event.target.closest('a')
+			if (link && link.getAttribute('href') !== '#') return
+
+			const tab = header.closest('.accordeon-item')
+			const description = tab.querySelector('.accordeon-item__description')
+			if (!tab || !container.contains(tab) || !description) return
+
+			event.preventDefault()
+			event.stopPropagation()
+
+			toggleItem(tab)
+		}
+
+		container.accordionListener = accordionClickHandler
+		container.addEventListener('click', accordionClickHandler)
+
+		function toggleItem(tab) {
+			const siblings = getSiblings(tab)
+			const descriptionContainer = tab.querySelector(
+				'.accordeon-item__description'
+			)
+			if (!descriptionContainer) return
+
+			const isActive = tab.classList.contains('active')
+
+			closeDescriptions(descriptions)
+			siblings.forEach(sibling => sibling.classList.remove('active'))
+
+			if (!isActive) {
+				tab.classList.add('active')
+
+				descriptionContainer.style.maxHeight = 'none'
+				descriptionContainer.style.visibility = 'hidden'
+
+				descriptionContainer.offsetHeight
+
+				const height = descriptionContainer.scrollHeight
+
+				descriptionContainer.style.visibility = ''
+				descriptionContainer.style.maxHeight = '0px'
+
+				requestAnimationFrame(() => {
+					descriptionContainer.style.maxHeight = `${height}px`
+				})
+			} else {
+				tab.classList.remove('active')
+				descriptionContainer.style.maxHeight = '0px'
+			}
+		}
+
+		function closeDescriptions(descriptionList) {
+			descriptionList.forEach(el => (el.style.maxHeight = '0px'))
+		}
+
+		function getSiblings(element) {
+			return [...element.parentNode.children].filter(
+				sibling =>
+					sibling !== element && sibling.classList.contains('accordeon-item')
+			)
+		}
+	})
 }
-
 function tabs() {
-	const tabContainer = document.querySelector('[data-tabs]')
-	if (!tabContainer) return
+	const tabContainers = document.querySelectorAll('[data-tabs]')
+	if (!tabContainers.length) return
 
-	const tabs = tabContainer.querySelectorAll('[data-tab-target]')
-	const tabContents = document.querySelectorAll('[data-tab-content]')
+	tabContainers.forEach(container => {
+		const tabs = container.querySelectorAll('[data-tab-target]')
+		const tabContents = container.querySelectorAll('[data-tab-content]')
 
-	tabContainer.addEventListener('click', event => {
-		const clickedTab = event.target.closest('[data-tab-target]')
-		if (!clickedTab) return
+		container.addEventListener('click', event => {
+			const clickedTab = event.target.closest('[data-tab-target]')
+			if (!clickedTab || !container.contains(clickedTab)) return
 
-		const targetId = clickedTab.dataset.tabTarget
-		const targetContent = document.querySelector(targetId)
-		if (!targetContent) return
+			const targetSelector = clickedTab.dataset.tabTarget
+			const targetContent = container.querySelector(targetSelector)
+			if (!targetContent) return
 
-		tabs.forEach(tab => tab.classList.remove('active'))
-		tabContents.forEach(content => content.classList.remove('active'))
+			tabs.forEach(tab => tab.classList.remove('active'))
+			tabContents.forEach(content => content.classList.remove('active'))
 
-		clickedTab.classList.add('active')
-		targetContent.classList.add('active')
+			clickedTab.classList.add('active')
+			targetContent.classList.add('active')
+		})
 	})
 }
 
@@ -618,7 +691,6 @@ export {
 	accordeon,
 	debounce,
 	dropdown,
-	handleAnchorClick,
 	initAsidePanels,
 	initModals,
 	initSlider,

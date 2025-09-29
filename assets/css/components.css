@@ -71,24 +71,12 @@ ul.sub-menu {
 .editor-area p {
 	@apply leading-[140%];
 }
-.editor-area {
-	@apply list-none;
-}
 .editor-area ul {
-	@apply list-none p-0 space-y-10 py-20;
+	@apply list-disc pl-[1rem] space-y-10 py-20;
 }
 
-.editor-area ul li {
-	@apply relative pl-20 mb-10;
-}
-
-.editor-area ul li:last-child {
-	@apply mb-0;
-}
-
-.editor-area ul li::before {
-	@apply absolute left-0 top-[10px] size-8 bg-primary rounded-full;
-	content: '';
+.editor-area ul li::marker {
+	@apply size-8 text-primary;
 }
 
 .editor-area h2,
@@ -99,13 +87,13 @@ ul.sub-menu {
 	@apply px-30 !mt-30;
 }
 .editor-area {
-	@apply mt-60 text-black;
+	@apply mt-60;
 }
 .editor-area h2 + ul {
 	@apply pt-0;
 }
 .editor-area img {
-	@apply my-30 rounded-[20px] overflow-hidden;
+	@apply my-30 rounded-xl overflow-hidden;
 }
 
 @media (hover: hover) {

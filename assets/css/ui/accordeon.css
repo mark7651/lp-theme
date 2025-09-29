@@ -1,14 +1,17 @@
 .accordeon {
-	@apply flex flex-col bg-white rounded-xl border border-border px-16 md:px-32 py-30;
+	@apply flex flex-col gap-10;
 }
 .accordeon-item {
-	@apply py-24 border-b border-border last:border-b-0;
+	@apply bg-white px-16 md:px-30 py-20 xl:py-30 rounded-[20px] cursor-pointer;
+}
+.accordeon-item__title {
+	@apply flex gap-16 lg:gap-30 justify-between items-center xl:text-[20px] font-semibold;
 }
 .accordeon-item__icon {
-	@apply transition-all;
+	@apply bg-gray rounded-full size-30 md:size-34 flex items-center justify-center transition-all;
 }
 .accordeon-item.active .accordeon-item__icon {
-	@apply rotate-180;
+	@apply rotate-90;
 }
 .accordeon-item__header {
 	@apply flex items-center gap-16 justify-between cursor-pointer transition-all;
@@ -17,6 +20,9 @@
 	@apply h-auto overflow-hidden;
 	transition: max-height 0.5s ease;
 }
+.accordeon__wide .accordeon-item__description {
+	@apply xl:max-w-[calc(50%-16px)] ml-auto;
+}
 .accordeon-item__description p {
-	@apply font-medium xl:text-[20px] mt-24;
+	@apply font-medium mt-24;
 }

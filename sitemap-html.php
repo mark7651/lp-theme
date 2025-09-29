@@ -1,102 +1,90 @@
-<?php
-
+<?php if (! defined('LP_THEME_DIR')) exit('No direct script access allowed');
 /**
  * Template for displaying the HTML sitemap page
  * Template Name: Sitemap HTML
  *
- * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  */
 get_header();
+
+$sitemap_page_id = lp_tpl2id('sitemap-html');
+// Pages
+$pages = get_pages([
+  'sort_column' => 'menu_order',
+  'exclude' => $sitemap_page_id,
+]);
+
+// Posts
+$posts = get_posts([
+  'post_type'      => 'post',
+  'post_status'    => 'publish',
+  'posts_per_page' => -1,
+  'orderby'        => 'date',
+  'order'          => 'DESC',
+]);
+
+// Services (custom post type)
+$services = get_posts([
+  'post_type'      => 'services',
+  'post_status'    => 'publish',
+  'posts_per_page' => -1,
+  'orderby'        => 'title',
+  'order'          => 'ASC',
+]);
 ?>
 
-<section class="page-section section">
+<section class="section-sm sitemap">
+
   <div class="container">
-    <div class="heading-2">
-      <?php echo esc_html(lp_page_title()); ?>
+    <div class="page-header">
+      <?php lp_breadcrumbs() ?>
+
+      <h1 class="heading-2">
+        <?php the_title(); ?>
+      </h1>
     </div>
 
-    <div class="entry-content">
-      <?php
-      // Pages
-      $pages = wp_list_pages(array(
-        'exclude'     => '1387',
-        'title_li'    => '',
-        'sort_column' => 'menu_order, post_title',
-        'echo'        => 0,
-      ));
-      if (! empty($pages)) : ?>
-        <h2 id="sitemap-pages">Pages</h2>
-        <ul><?php echo wp_kses_post($pages); ?></ul>
-      <?php endif; ?>
+    <div class="grid gap-40 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 
-      <?php
-      // Posts
-      $posts_args = array(
-        'post_type'      => 'post',
-        'posts_per_page' => -1,
-        'post_status'    => 'publish',
-      );
-      $posts_query = new WP_Query($posts_args);
-      if ($posts_query->have_posts()) : ?>
-        <h2 id="sitemap-posts">Posts</h2>
-        <ul>
-          <?php while ($posts_query->have_posts()) : $posts_query->the_post(); ?>
-            <li <?php post_class(); ?>><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
-          <?php endwhile;
-          wp_reset_postdata(); ?>
-        </ul>
-      <?php endif; ?>
-
-      <?php
-      // Post Categories
-      $categories = wp_list_categories(array(
-        'title_li'   => '',
-        'show_count' => false,
-        'hide_empty' => true,
-        'echo'       => 0,
-      ));
-      if (! empty($categories)) : ?>
-        <h2 id="sitemap-posts-categories">Post Categories</h2>
-        <ul><?php echo wp_kses_post($categories); ?></ul>
-      <?php endif; ?>
-
-      <?php
-      // Post Tags
-      $tags = get_tags(array(
-        'hide_empty' => true,
-      ));
-      if (! empty($tags) && ! is_wp_error($tags)) : ?>
-        <h2 id="sitemap-posts-tags">Post Tags</h2>
-        <ul>
-          <?php foreach ($tags as $tag) : ?>
-            <li class="tag-id-<?php echo esc_attr($tag->term_id); ?>">
-              <a href="<?php echo esc_url(get_tag_link($tag->term_id)); ?>">
-                <?php echo esc_html($tag->name); ?>
+      <div class="flex-col flex">
+        <h2 class="heading-4 mb-30">Сторінки</h2>
+        <ul class="mb-60 grid gap-10">
+          <?php foreach ($pages as $page): ?>
+            <li>
+              <a href="<?php echo get_permalink($page); ?>">
+                <?php echo esc_html($page->post_title); ?>
               </a>
             </li>
           <?php endforeach; ?>
         </ul>
-      <?php endif; ?>
+      </div>
 
-      <?php
-      // Custom Post Type: Our Work
-      $custom_args = array(
-        'post_type'      => 'our-work',
-        'posts_per_page' => -1,
-        'post_status'    => 'publish',
-      );
-      $custom_query = new WP_Query($custom_args);
-      if ($custom_query->have_posts()) : ?>
-        <h2 id="sitemap-our-work">Our Work</h2>
-        <ul>
-          <?php while ($custom_query->have_posts()) : $custom_query->the_post(); ?>
-            <li <?php post_class(); ?>><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
-          <?php endwhile;
-          wp_reset_postdata(); ?>
+      <div class="flex-col flex">
+        <h2 class="heading-4 mb-30">Блог</h2>
+        <ul class="mb-60 grid gap-10">
+          <?php foreach ($posts as $post): ?>
+            <li>
+              <a href="<?php echo get_permalink($post); ?>">
+                <?php echo esc_html(get_the_title($post)); ?>
+              </a>
+            </li>
+          <?php endforeach; ?>
         </ul>
-      <?php endif; ?>
+      </div>
+
+      <div class="flex-col flex">
+        <h2 class="heading-4 mb-30">Послуги</h2>
+        <ul class="grid gap-10">
+          <?php foreach ($services as $service): ?>
+            <li>
+              <a href="<?php echo get_permalink($service); ?>">
+                <?php echo esc_html(get_the_title($service)); ?>
+              </a>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
     </div>
+
   </div>
 </section>
-
 <?php get_footer(); ?>

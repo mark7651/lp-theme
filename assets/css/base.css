@@ -3,7 +3,6 @@
 }
 html {
 	@apply antialiased select-none font-main text-[14px] md:text-[16px] xl:text-[var(--root-size)];
-	-webkit-font-smoothing: antialiased;
 	font-kerning: none;
 	font-variant-ligatures: none;
 }

@@ -8,7 +8,7 @@
 }
 
 .splide__track--draggable {
-	@apply select-none;
+	@apply select-none cursor-grab;
 }
 
 .splide__track--fade > .splide__list > .splide__slide {
@@ -40,7 +40,7 @@
 }
 
 .splide__pagination li {
-	@apply inline-block leading-none list-none m-0 pointer-events-auto;
+	@apply inline-block leading-none list-none m-0 pointer-events-auto flex-1;
 }
 
 .splide:not(.is-overflow) .splide__pagination {
@@ -92,11 +92,11 @@
 }
 
 .splide__arrow {
-	@apply flex items-center justify-center p-0 absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white text-black-secondary size-40 rounded-full aspect-square border border-border flex items-center justify-center hover:opacity-70;
+	@apply flex items-center justify-center p-0 absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer bg-white/30 text-white size-40 rounded-full aspect-square hover:opacity-70;
 }
 
 .splide__arrow svg {
-	@apply size-26;
+	@apply size-24;
 }
 
 .splide__arrow svg path {
@@ -104,7 +104,7 @@
 	stroke-miterlimit: 10;
 	stroke-linecap: round;
 	stroke-width: 2px;
-	stroke: rgba(30, 32, 61, 0.7);
+	stroke: var(--color-white);
 }
 
 .splide__arrow:hover:not(:disabled) {
@@ -116,11 +116,11 @@
 }
 
 .splide__arrow:focus-visible {
-	@apply outline outline-[3px] outline-[#0bf] outline-offset-[3px];
+	@apply outline-[#0bf] outline-offset-[3px];
 }
 
 .splide__arrow--prev {
-	@apply -left-20 xl:-left-60 scale-x-[-1];
+	@apply left-20 scale-x-[-1];
 }
 
 .splide__arrow--prev svg {
@@ -128,15 +128,15 @@
 }
 
 .splide__arrow--next {
-	@apply -right-20 xl:-right-60 scale-x-[-1];
+	@apply right-20 scale-x-[-1];
 }
 
 .splide__pagination {
-	@apply flex gap-8 items-center;
+	@apply flex gap-10 items-center;
 }
 .splide__pagination__page {
-	@apply bg-white size-16 rounded-full aspect-square border border-border;
+	@apply bg-white/30 h-4 rounded-[4px] w-full;
 }
 .splide__pagination__page.is-active {
-	@apply bg-primary;
+	@apply bg-white;
 }

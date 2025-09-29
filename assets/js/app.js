@@ -2,12 +2,10 @@ import './barba.js'
 import { LPForm } from './forms.js'
 import {
 	debounce,
-	handleAnchorClick,
 	hideOpenedPanels,
 	initAsidePanels,
 	lazyVideos,
 	processLazyImages,
-	scrollToAnchor,
 	setPagePositionTop,
 } from './utils.js'
 
@@ -199,7 +197,7 @@ function reinitForBarba() {
 
 	new LPForm('form-contact')
 	window.addEventListener('load', processLazyImages)
-	document.addEventListener('click', handleAnchorClick)
+	crollToAnchor()
 }
 
 function initOnceFunctions() {
@@ -222,11 +220,13 @@ function initializeGSAPAndLenis() {
 	ScrollTrigger.config({ ignoreMobileResize: true })
 
 	state.lenis = new Lenis({
-		lerp: 0.14,
+		//autoRaf: true,
+		lerp: 0.12,
 		direction: 'vertical',
 		smoothWheel: true,
 		smoothTouch: false,
 		touchMultiplier: 0,
+		anchors: true,
 	})
 	window.lenis = state.lenis
 
@@ -245,12 +245,6 @@ function initAnimations() {
 	//reller()
 	initFadeAnimations()
 	initHeadingAnimations()
-
-	const hash = localStorage.getItem('scrollToHash')
-	if (hash) {
-		setTimeout(() => scrollToAnchor(hash), 200)
-		localStorage.removeItem('scrollToHash')
-	}
 }
 
 function reller() {
@@ -294,7 +288,7 @@ function reller() {
 			xPercents = [],
 			curIndex = 0,
 			pixelsPerSecond = (config.speed || 1) * 100,
-			snap = config.snap === false ? v => v : gsap.utils.snap(config.snap || 1), // some browsers shift by a pixel to accommodate flex layouts, so for example if width is 20% the first element's width might be 242px, and the next 243px, alternating back and forth. So we snap to 5 percentage points to make things look more natural
+			snap = config.snap === false ? v => v : gsap.utils.snap(config.snap || 1),
 			totalWidth,
 			curX,
 			distanceToStart,
@@ -302,7 +296,6 @@ function reller() {
 			item,
 			i
 		gsap.set(items, {
-			// convert "x" to "xPercent" to make things responsive, and populate the widths/xPercents Arrays to make lookups faster.
 			xPercent: (i, el) => {
 				let w = (widths[i] = parseFloat(gsap.getProperty(el, 'width', 'px')))
 				xPercents[i] = snap(

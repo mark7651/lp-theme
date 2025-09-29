@@ -23,5 +23,12 @@
 	animation-duration: 0.7s;
 }
 .transition-transform {
-	transition: transform 0.1s;
+	transition: transform 200ms;
+}
+.content-visibility-auto {
+	content-visibility: auto;
+}
+.char,
+.fade-in {
+	transform: translateY(0);
 }

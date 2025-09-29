@@ -394,6 +394,42 @@ if (function_exists('acf_add_local_field_group')):
                 'ui_on_text' => 'Показано',
                 'ui_off_text' => 'Скрыто',
             ),
+            array(
+                'key' => 'field_youtubej345',
+                'label' => 'YouTube',
+                'name' => 'enable_youtube',
+                'type' => 'true_false',
+                'required' => 0,
+                'conditional_logic' => 0,
+                'wrapper' => array(
+                    'width' => '25',
+                    'class' => '',
+                    'id' => '',
+                ),
+                'message' => '<b>youtube_link</b>',
+                'default_value' => 0,
+                'ui' => 1,
+                'ui_on_text' => 'Показано',
+                'ui_off_text' => 'Скрыто',
+            ),
+            array(
+                'key' => 'field_tiktok45',
+                'label' => 'Tiktok',
+                'name' => 'enable_tiktok',
+                'type' => 'true_false',
+                'required' => 0,
+                'conditional_logic' => 0,
+                'wrapper' => array(
+                    'width' => '25',
+                    'class' => '',
+                    'id' => '',
+                ),
+                'message' => '<b>tiktok_link</b>',
+                'default_value' => 0,
+                'ui' => 1,
+                'ui_on_text' => 'Показано',
+                'ui_off_text' => 'Скрыто',
+            ),
 
             array(
                 'key' => 'field_5f51e83b4d78f',
@@ -1427,6 +1463,22 @@ function lp_conditional_viber($field)
         return;
     }
 }
+function lp_conditional_youtube($field)
+{
+    if (get_field('enable_youtube', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
+function lp_conditional_tiktok($field)
+{
+    if (get_field('enable_tiktok', 'option')) {
+        return $field;
+    } else {
+        return;
+    }
+}
 
 add_filter('acf/prepare_field/key=field_5f6dcb4612d7d', 'lp_conditional_phone_1', 20);
 add_filter('acf/prepare_field/key=field_5f6dcb7978a2d', 'lp_conditional_phone_2', 20);
@@ -1444,3 +1496,5 @@ add_filter('acf/prepare_field/key=field_sdgd277ff28fe', 'lp_conditional_vk', 20)
 add_filter('acf/prepare_field/key=field_linkedin8fe', 'lp_conditional_linkedin', 20);
 add_filter('acf/prepare_field/key=field_skype8fe', 'lp_conditional_skype', 20);
 add_filter('acf/prepare_field/key=field_sdbddf5ff28fe', 'lp_conditional_viber', 20);
+add_filter('acf/prepare_field/key=field_youtubesve', 'lp_conditional_youtube', 20);
+add_filter('acf/prepare_field/key=field_tiktoksve', 'lp_conditional_tiktok', 20);

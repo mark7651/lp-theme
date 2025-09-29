@@ -391,6 +391,7 @@ body.wp-admin .button.active,body.wp-admin .button-secondary.active,body.wp-admi
 body.wp-admin .button.active:hover,body.wp-admin .button-secondary.active:hover,body.wp-admin.wp-core-ui .button.active:hover,body.wp-admin.wp-core-ui .button-secondary.active:hover{background:#37444c;border-color:#191f25}
 body.wp-admin .button-primary,body.wp-admin .page-title-action,body.wp-admin.wp-core-ui .button-primary,body.wp-admin .wrap a.page-title-action,.acf-btn{background:#3858e9;border-color:#3858e9;color:#fff}
 body .acf-switch{background:#191f25}
+body .wp-color-result-text {background: #32373b;}
 body .accordion-section-title button.accordion-trigger, body .nav-menus-php .metabox-holder .accordion-section-title button.accordion-trigger { color: #bac8d4!important;}
 body .acf-link .link-wrap {border: #3c4043 solid 1px;background: #191f25;}
 .acf-repeater .acf-row td{border-bottom:1px solid #3c4043}
@@ -924,3 +925,13 @@ body .file_permission_table td{border-bottom:1px solid #3c4043}
 body .aio_green_box{background:#050000}
 body .aiowps_more_info_anchor,body .aiowps_more_info_toggle_char{background-color:#191f25}
 body .aio_orange_box,body .aio_red_box{background:red}
+body #loco-editor .is-readonly>.wg-content>textarea, body #loco-editor .is-readonly>.wg-content>textarea[readonly] {background: #464b4f;text-shadow: none;}body #loco-editor .is-field>.wg-content>textarea {border: 1px solid #8c8f94;}
+body #loco-editor .is-table .wg-thead .has-title>header {background: rgb(50 55 59);}
+body #loco-editor .is-table .wg-thead {background: #32373b;}
+body #loco-editor .is-table .po-empty {color: #eeeeee;}
+body #loco-editor .is-table .wg-cols>div>div:nth-child(even){background-color: #74787b;}
+body #loco-editor .is-table .wg-cols>div>div {background-color: #464b4f;}
+body #loco-editor .wg-split {background: #23282e;}
+body #loco-editor .has-title>header {background: #32373b;}
+body #loco-editor {border: solid 1px #23282e;}
+body #loco-admin.wrap .button, #loco-admin.wrap input[type=text] { color: #fff;}

@@ -22,17 +22,16 @@
 	@apply h-[52px] rounded-[12px] px-16 lg:px-30 justify-center;
 }
 
-.btn-loading {
+
+.btn.loading {
 	@apply relative text-transparent hover:text-transparent;
 }
-
-.btn-primary.loading::after {
-	@apply absolute inset-0 m-auto
-           w-5 h-5
-           border-2 border-white border-t-primary
+.btn.loading::after {
+	@apply content-[''] absolute inset-0 m-auto 
+          size-[1em]
+           border-2 border-black border-t-transparent
            rounded-full
            animate-spin;
-	content: '';
 }
 
 .btn svg {
