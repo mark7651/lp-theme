@@ -1,16 +1,15 @@
 .btn,
 .btn-small {
-	@apply relative inline-flex w-full lg:w-fit items-center text-center
-		h-[56px] lg:h-[76px] xl:h-[90px]
-		leading-[100%] font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-70;
+	@apply relative inline-flex w-fit items-center text-center justify-center
+		h-48 md:h-56 xl:h-70 tracking-[-0.02em] gap-10 xl:text-[20px] overflow-hidden
+		leading-[90%] font-semibold transition-all duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-70;
 }
-
-.header .btn-small {
-	@apply max-sm:h-[40px];
+.btn {
+	@apply rounded-[10px] xl:rounded-[20px] px-30 lg:px-50;
 }
 
 .btn-secondary {
-	@apply text-black bg-secondary;
+	@apply text-black bg-gray;
 }
 .btn-primary {
 	@apply text-white bg-primary;
@@ -18,10 +17,15 @@
 .btn-white {
 	@apply text-black bg-white;
 }
-.btn-small {
-	@apply h-[52px] rounded-[12px] px-16 lg:px-30 justify-center;
+.btn-black {
+	@apply text-white bg-black;
 }
-
+.btn-outline {
+	@apply text-black border border-black !rounded-[40px] hover:bg-white;
+}
+.btn-small {
+	@apply h-30 lg:h-48 max-h-48 py-10 px-16 md:px-30 justify-center rounded-[6px] sm:rounded-[10px];
+}
 
 .btn.loading {
 	@apply relative text-transparent hover:text-transparent;
@@ -29,7 +33,7 @@
 .btn.loading::after {
 	@apply content-[''] absolute inset-0 m-auto 
           size-[1em]
-           border-2 border-black border-t-transparent
+           border-2 border-black mix-blend-difference invert border-t-transparent
            rounded-full
            animate-spin;
 }
@@ -37,6 +41,14 @@
 .btn svg {
 	@apply size-12 lg:size-16;
 }
+.ripple {
+	@apply absolute rounded-full pointer-events-none transform-[scale(0)] bg-white/60 animate-ripple;
+}
+
 .link-btn {
-	@apply inline-flex items-center gap-10 transition-opacity pb-4 border-b w-fit hover:opacity-70;
+	@apply font-semibold text-primary max-sm:text-[12px] inline-flex items-center gap-10 transition-opacity w-fit hover:opacity-70;
+}
+
+.btn-round {
+	@apply size-30 md:size-48 rounded-full flex items-center justify-center font-semibold;
 }
