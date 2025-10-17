@@ -1,19 +1,19 @@
-<footer id="main-footer">
+<footer id="footer" class="footer">
 	<div class="container">
-	<div class="async-template-part" data-template-part="footer"></div>
+
 		<div class="footer-row">
 			<div class="footer-column">
-				<?php if ( is_active_sidebar( 'footer-1' ) ) { ?><?php dynamic_sidebar('footer-1'); ?><?php } ?>
+				<?php if (is_active_sidebar('footer-1')) { ?><?php dynamic_sidebar('footer-1'); ?><?php } ?>
 			</div>
 			<div class="footer-column">
-				<?php if ( is_active_sidebar( 'footer-2' ) ) { ?><?php dynamic_sidebar('footer-2'); ?><?php } ?>
+				<?php if (is_active_sidebar('footer-2')) { ?><?php dynamic_sidebar('footer-2'); ?><?php } ?>
 			</div>
 			<div class="footer-column">
-				<?php if ( is_active_sidebar( 'footer-3' ) ) { ?><?php dynamic_sidebar('footer-3'); ?><?php } ?>
+				<?php if (is_active_sidebar('footer-3')) { ?><?php dynamic_sidebar('footer-3'); ?><?php } ?>
 			</div>
 			<div class="footer-column">
 				<div class="widget widget-contacts">
-					<div class="widget-title"><?php _e( 'Contact Us', 'lptheme' ); ?></div>
+					<div class="widget-title"><?php _e('Contact Us', 'lptheme'); ?></div>
 
 					<div class="contact-list">
 
@@ -28,8 +28,8 @@
 		<div class="container">
 			<div class="grid">
 				<div class="col">
-					<div class="copyrights">© <?php echo date("Y"); ?> <?php bloginfo( 'name' ); ?>.
-						<?php _e( 'All rights reserved', 'lptheme' ); ?>.</div>
+					<div class="copyrights">© <?php echo date("Y"); ?> <?php bloginfo('name'); ?>.
+						<?php _e('All rights reserved', 'lptheme'); ?>.</div>
 				</div>
 			</div>
 		</div>

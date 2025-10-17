@@ -43,7 +43,7 @@ function global_acf_init()
 	require_once LP_FRAMEWORK . '/theme-functions.php';
 	require_once LP_FRAMEWORK . '/theme-post-types.php';
 	require_once LP_FRAMEWORK . '/theme-admin.php';
-	require_once LP_FRAMEWORK . '/theme-seo.php';
+	require_once LP_FRAMEWORK . '/seo/seo.php';
 	require_once LP_FRAMEWORK . '/theme-forms.php';
 	require_once LP_FRAMEWORK . '/theme-testimonials.php';
 	require_once LP_FRAMEWORK . '/theme-subscriptions.php';

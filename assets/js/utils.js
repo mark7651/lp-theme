@@ -281,14 +281,14 @@ const getScrollbarWidth = () => {
 
 const compensateScrollbar = (function () {
 	const scrollbarWidth = getScrollbarWidth()
-	const header = document.querySelector('.header')
+	const header = document.querySelector('.header-mainbar')
 
 	return {
 		lock() {
 			if (lenis.isStopped && scrollbarWidth > 0) {
 				document.body.style.paddingRight = `${scrollbarWidth}px`
 				if (header) {
-					//header.style.marginRight = `${scrollbarWidth / 2}px`
+					header.style.marginRight = `${scrollbarWidth}px`
 				}
 				lenis.stop()
 			}
