@@ -8,6 +8,7 @@
 
 require_once LP_FRAMEWORK . '/seo/seo-admin.php';
 require_once LP_FRAMEWORK . '/seo/seo-tags.php';
+require_once LP_THEMEROOT . '/seo/schema-org.php';
 
 // jQuery to footer ==========================================================================
 function remove_head_scripts()
@@ -626,8 +627,16 @@ if (function_exists('pll_current_language')) {
 		}
 		return '';
 	}
-}
 
+	add_filter('pll_rel_hreflang_attributes', function ($hreflangs) {
+		$default_lang = function_exists('pll_default_language') ? pll_default_language() : 'en';
+
+		if (isset($hreflangs[$default_lang])) {
+			$hreflangs['x-default'] = $hreflangs[$default_lang];
+		}
+		return $hreflangs;
+	});
+}
 
 /**
  * ------------------------------------------------------------------------------------------------

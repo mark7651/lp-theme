@@ -39,7 +39,7 @@ require_once LP_FRAMEWORK . '/theme-setup.php';
 add_action('acf/init', 'global_acf_init');
 function global_acf_init()
 {
-	require_once LP_FRAMEWORK . '/theme-options.php';
+	require_once LP_FRAMEWORK . '/options/options.php';
 	require_once LP_FRAMEWORK . '/theme-functions.php';
 	require_once LP_FRAMEWORK . '/theme-post-types.php';
 	require_once LP_FRAMEWORK . '/theme-admin.php';
@@ -204,22 +204,4 @@ if (! function_exists('lp_defer_scripts')) {
 		return $tag;
 	}
 	add_filter('script_loader_tag', 'lp_defer_scripts', 10, 3);
-}
-
-/**
- * ------------------------------------------------------------------------------------------------
- * translation
- * ------------------------------------------------------------------------------------------------
- */
-if (function_exists('pll_current_language')) {
-	function translate_pll($ru_text, $ua_text)
-	{
-		$current_language = pll_current_language();
-
-		if ($current_language == "ru") {
-			return pll__($ru_text);
-		} else {
-			return pll__($ua_text);
-		}
-	}
 }

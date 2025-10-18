@@ -5,6 +5,7 @@
  * body classes
  * ------------------------------------------------------------------------------------------------
  */
+
 if (!function_exists('lp_body_class')) {
 	function lp_body_class($classes)
 	{
@@ -105,10 +106,9 @@ add_filter('walker_nav_menu_start_el', 'lp_nav_description', 10, 4);
 
 /**
  * ------------------------------------------------------------------------------------------------
- * analytics area isert
+ * analytics area insert
  * ------------------------------------------------------------------------------------------------
  */
-
 
 // before </head>
 if (! function_exists('closing_head_code')) {
@@ -145,16 +145,10 @@ if (! function_exists('closing_body_code')) {
 	}
 }
 
-//
 // Allow ICO file uploads
 function allow_custom_mime_types($mimes)
 {
-	// Add ICO to the list of allowed mime types
 	$mimes['ico'] = array('image/x-icon', 'image/vnd.microsoft.icon');
-
-	// Debug: Log the current mime types
-	error_log('Current MIME types: ' . print_r($mimes, true));
-
 	return $mimes;
 }
 add_filter('upload_mimes', 'allow_custom_mime_types', 1, 1);
@@ -173,7 +167,6 @@ function fix_mime_type_ico($data, $file, $filename, $mimes)
 }
 add_filter('wp_check_filetype_and_ext', 'fix_mime_type_ico', 10, 4);
 
-// For extra security validation
 function custom_upload_validation($file)
 {
 	if ($file['type'] == 'image/x-icon' || $file['type'] == 'image/vnd.microsoft.icon') {
@@ -190,7 +183,6 @@ add_filter('wp_handle_upload_prefilter', 'custom_upload_validation');
  * preloader
  * ------------------------------------------------------------------------------------------------
  */
-
 
 if (! function_exists('lp_preloader')) {
 	function lp_preloader()
@@ -246,14 +238,11 @@ if (!function_exists('lp_favicon')) {
 	add_action('admin_head', 'lp_favicon', 2);
 }
 
-
-
 /**
  * ------------------------------------------------------------------------------------------------
  * logo image
  * ------------------------------------------------------------------------------------------------
  */
-
 
 if (!function_exists('lp_logo')) {
 	function lp_logo()
@@ -323,9 +312,9 @@ if (! function_exists('lp_header_main_nav')) {
 														));
 													} else {
 														$menu_link = get_admin_url(null, 'nav-menus.php');
-													?><?php printf(wp_kses(__('Создайте Ваше первое <a href="%s"><strong>меню навигации</strong></a>', 'lptheme'), 'default'), $menu_link) ?><?php
-																																																																																	}
-																																																																																		?></nav>
+													?><?php printf(wp_kses(__('Create <a href="%s"><strong>menu</strong></a>', 'lptheme'), 'default'), $menu_link) ?><?php
+																																																																					}
+																																																																						?></nav>
 
 	<?php
 	}
@@ -440,158 +429,253 @@ if (! function_exists('lp_is_blog_archive')) {
  * ------------------------------------------------------------------------------------------------
  */
 
-if (! function_exists('lp_breadcrumbs')) {
-	function lp_breadcrumbs()
+if (!function_exists('lp_breadcrumbs')) {
+	function lp_breadcrumbs($args = array())
 	{
-		if (!get_field('breadcrumbs', 'option')) return;
+		if (!get_field('breadcrumbs', 'option')) {
+			return;
+		}
 
-		$text['home']     = esc_html__('Home', 'lptheme');
-		$text['category'] = '%s';
-		$text['search']   = 'Результати пошуку: "%s"';
-		$text['tag']      = 'Записи з тегом "%s"';
-		$text['author']   = 'Автор: %s';
-		$text['404']      = 'Помилка 404';
-		$text['page']     = 'Сторінка %s';
-		$text['cpage']    = 'Коментарі сторінка %s';
+		$defaults = array(
+			'show_on_home' => false,
+			'show_home_link' => true,
+			'show_current' => true,
+			'show_last_sep' => true,
+			'max_depth' => 5,
+			'cache_duration' => HOUR_IN_SECONDS,
+			'custom_labels' => array()
+		);
+		$args = wp_parse_args($args, $defaults);
 
-		$wrap_before    = '<nav class="hidden gap-20 mb-40 font-medium breadcrumbs md:inline-flex text-slate-400 text-tag" itemscope itemtype="http://schema.org/BreadcrumbList">';
-		$wrap_after     = '</nav>';
-		$sep            = '<span class="breadcrumbs__separator"> / </span>';
-		$before         = '<span class="breadcrumbs__current">';
-		$after          = '</span>';
+		$text = array_merge(array(
+			'home' => esc_html__('Home', 'lptheme'),
+			'category' => '%s',
+			'search' => esc_html__('Search results for: "%s"', 'lptheme'),
+			'tag' => esc_html__('Posts tagged "%s"', 'lptheme'),
+			'author' => esc_html__('Author: %s', 'lptheme'),
+			'404' => esc_html__('Error 404', 'lptheme'),
+			'page' => esc_html__('Page %s', 'lptheme'),
+			'cpage' => esc_html__('Comments page %s', 'lptheme'),
+			'year' => esc_html__('Year: %s', 'lptheme'),
+			'month' => esc_html__('Month: %s', 'lptheme'),
+			'day' => esc_html__('Day: %s', 'lptheme'),
+		), $args['custom_labels']);
 
-		$show_on_home   = 0;
-		$show_home_link = 1;
-		$show_current   = 1;
-		$show_last_sep  = 1;
+		$wrap_before = '<nav class="breadcrumbs md:inline-flex hidden gap-20 mb-40 font-medium" itemscope itemtype="https://schema.org/BreadcrumbList" aria-label="' . esc_attr__('Breadcrumb Navigation', 'lptheme') . '">';
+		$wrap_after = '</nav>';
+		$sep = '<span class="breadcrumbs__separator" aria-hidden="true"> / </span>';
+		$before = '<span class="breadcrumbs__current" aria-current="page">';
+		$after = '</span>';
 
-		global $post;
+		global $post, $wp_query;
 		$home_url = home_url('/');
-		$link = '<span itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">';
-		$link .= '<a class="breadcrumbs__link" href="%1$s" itemprop="item"><span itemprop="name">%2$s</span></a>';
-		$link .= '<meta itemprop="position" content="%3$s" />';
-		$link .= '</span>';
 		$position = 0;
-		$home_link = sprintf($link, $home_url, $text['home'], 1);
+		$breadcrumbs = array();
 
-		if (is_home() || is_front_page()) {
-			if ($show_on_home) echo $wrap_before . $home_link . $wrap_after;
-		} else {
-			echo $wrap_before;
-			if ($show_home_link) {
-				$position += 1;
-				echo $home_link;
+		$link_template = '<span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">' .
+			'<a class="breadcrumbs__link" href="%1$s" itemprop="item"><span itemprop="name">%2$s</span></a>' .
+			'<meta itemprop="position" content="%3$s" />' .
+			'</span>';
+
+		function add_breadcrumb(&$breadcrumbs, $url, $title, &$position)
+		{
+			$position++;
+			$breadcrumbs[] = array(
+				'url' => esc_url($url),
+				'title' => esc_html($title),
+				'position' => $position
+			);
+		}
+
+		function get_post_type_archive_breadcrumb($post_type_name, &$breadcrumbs, &$position)
+		{
+			$post_type = get_post_type_object($post_type_name);
+
+			if (!$post_type || !$post_type->public || !$post_type->has_archive) {
+				return;
 			}
 
-			if (is_category()) {
-				// Category Breadcrumb
-				$parents = get_ancestors(get_query_var('cat'), 'category');
-				foreach (array_reverse($parents) as $cat) {
-					$position += 1;
-					if ($position > 1) echo $sep;
-					echo sprintf($link, get_category_link($cat), get_cat_name($cat), $position);
-				}
-				if (get_query_var('paged')) {
-					$position += 1;
-					echo $sep . sprintf($link, get_category_link(get_query_var('cat')), single_cat_title('', false), $position);
-					echo $sep . $before . sprintf($text['page'], get_query_var('paged')) . $after;
-				} else {
-					if ($show_current) {
-						if ($position >= 1) echo $sep;
-						echo $before . single_cat_title('', false) . $after;
-					} elseif ($show_last_sep) echo $sep;
-				}
-			} elseif (is_single() && !is_attachment()) {
-				// Single Post Breadcrumb
-				if (get_post_type() != 'post') {
-					$post_type = get_post_type_object(get_post_type());
+			$archive_link = get_post_type_archive_link($post_type_name);
+			if ($archive_link) {
+				add_breadcrumb($breadcrumbs, $archive_link, $post_type->labels->name, $position);
+			}
+		}
 
-					// Only show post type archive link if it's publicly queryable and has archive
-					if ($post_type->publicly_queryable && $post_type->has_archive) {
-						$position += 1;
-						if ($position > 1) echo $sep;
-						echo sprintf($link, get_post_type_archive_link($post_type->name), $post_type->labels->name, $position);
-					}
+		function get_taxonomy_hierarchy($term_id, $taxonomy, &$breadcrumbs, &$position, $max_depth = 10)
+		{
+			if ($max_depth <= 0) return;
 
-					if ($show_current) {
-						if ($position >= 1) echo $sep;
-						echo $before . get_the_title() . $after;
-					}
-				} else {
-					$cat = get_the_category();
-					if ($cat) {
-						$cat = $cat[0];
-						$parents = get_ancestors($cat->term_id, 'category');
-						$parents = array_reverse($parents);
-						foreach ($parents as $cat_id) {
-							$position += 1;
-							echo $sep . sprintf($link, get_category_link($cat_id), get_cat_name($cat_id), $position);
+			$parents = get_ancestors($term_id, $taxonomy);
+			$parents = array_reverse($parents);
+
+			foreach ($parents as $parent_id) {
+				$parent_term = get_term($parent_id, $taxonomy);
+				if ($parent_term && !is_wp_error($parent_term)) {
+					add_breadcrumb($breadcrumbs, get_term_link($parent_term), $parent_term->name, $position);
+				}
+			}
+		}
+
+		function get_page_hierarchy($page_id, &$breadcrumbs, &$position, $max_depth = 10)
+		{
+			if ($max_depth <= 0) return;
+
+			$parents = get_post_ancestors($page_id);
+			$parents = array_reverse($parents);
+
+			foreach ($parents as $parent_id) {
+				$parent_title = get_the_title($parent_id);
+				if ($parent_title) {
+					add_breadcrumb($breadcrumbs, get_permalink($parent_id), $parent_title, $position);
+				}
+			}
+		}
+
+		function get_custom_post_hierarchy($post_id, $post_type, &$breadcrumbs, &$position)
+		{
+			// Add post type archive
+			get_post_type_archive_breadcrumb($post_type, $breadcrumbs, $position);
+
+			// Handle hierarchical custom post types
+			$post_type_obj = get_post_type_object($post_type);
+			if ($post_type_obj && $post_type_obj->hierarchical) {
+				get_page_hierarchy($post_id, $breadcrumbs, $position);
+				return;
+			}
+
+			// Handle non-hierarchical custom post types with primary taxonomy
+			$taxonomies = get_object_taxonomies($post_type, 'objects');
+
+			foreach ($taxonomies as $taxonomy) {
+				if (!$taxonomy->public || !$taxonomy->show_ui) continue;
+
+				$terms = get_the_terms($post_id, $taxonomy->name);
+				if ($terms && !is_wp_error($terms)) {
+					// Get the primary term or first term
+					$primary_term = $terms[0];
+
+					// Check for Yoast primary term
+					if (class_exists('WPSEO_Primary_Term')) {
+						$primary_term_obj = new WPSEO_Primary_Term($taxonomy->name, $post_id);
+						$primary_term_id = $primary_term_obj->get_primary_term();
+						if ($primary_term_id) {
+							$primary_term = get_term($primary_term_id);
 						}
 					}
-					if ($show_current) echo $sep . $before . get_the_title() . $after;
-				}
-			} elseif (is_page() && !$post->post_parent) {
-				// Single Page Breadcrumb
-				if ($show_current) echo $sep . $before . get_the_title() . $after;
-			} elseif (is_page() && $post->post_parent) {
-				// Page with Parent Breadcrumb
-				$parents = get_post_ancestors($post->ID);
-				foreach (array_reverse($parents) as $page_id) {
-					$position += 1;
-					if ($position > 1) echo $sep;
-					echo sprintf($link, get_page_link($page_id), get_the_title($page_id), $position);
-				}
-				if ($show_current) echo $sep . $before . get_the_title() . $after;
-			} elseif (is_tag()) {
-				// Tag Archive Breadcrumb
-				if ($show_current) echo $sep . $before . sprintf($text['tag'], single_tag_title('', false)) . $after;
-			} elseif (is_author()) {
-				// Author Archive Breadcrumb
-				$author = get_userdata(get_query_var('author'));
-				if ($show_current) echo $sep . $before . sprintf($text['author'], $author->display_name) . $after;
-			} elseif (is_404()) {
-				// 404 Page Breadcrumb
-				if ($show_current) echo $sep . $before . $text['404'] . $after;
-			} elseif (is_search()) {
-				// Search Results Breadcrumb
-				if ($show_current) echo $sep . $before . sprintf($text['search'], get_search_query()) . $after;
-			} elseif (is_year()) {
-				// Year Archive Breadcrumb
-				if ($show_current) echo $sep . $before . get_the_time('Y') . $after;
-			} elseif (is_tax()) {
-				$taxonomy = get_queried_object();
-				$position += 1;
 
-				// Get the taxonomy hierarchy if it's hierarchical
-				if ($taxonomy->parent) {
-					$parents = get_ancestors($taxonomy->term_id, $taxonomy->taxonomy);
-					foreach (array_reverse($parents) as $term_id) {
-						echo $sep . sprintf($link, get_term_link($term_id, $taxonomy->taxonomy), get_term($term_id)->name, ++$position);
+					if ($primary_term && !is_wp_error($primary_term)) {
+						get_taxonomy_hierarchy($primary_term->term_id, $taxonomy->name, $breadcrumbs, $position);
+						add_breadcrumb($breadcrumbs, get_term_link($primary_term), $primary_term->name, $position);
+						break; // Only show one taxonomy
 					}
 				}
+			}
+		}
 
-				// Display current taxonomy term
-				if ($show_current) {
-					echo $sep . $before .  __($taxonomy->name, 'lptheme') . $after;
-				} elseif ($show_last_sep) {
-					echo $sep;
+		if ($args['show_home_link']) {
+			add_breadcrumb($breadcrumbs, $home_url, $text['home'], $position);
+		}
+
+		if (is_home() || is_front_page()) {
+			if (!$args['show_on_home']) {
+				return;
+			}
+		} elseif (is_category()) {
+			get_taxonomy_hierarchy(get_query_var('cat'), 'category', $breadcrumbs, $position, $args['max_depth']);
+
+			if (get_query_var('paged')) {
+				add_breadcrumb($breadcrumbs, get_category_link(get_query_var('cat')), single_cat_title('', false), $position);
+				$current_title = sprintf($text['page'], get_query_var('paged'));
+			} else {
+				$current_title = $args['show_current'] ? single_cat_title('', false) : '';
+			}
+		} elseif (is_single() && !is_attachment()) {
+			$post_type = get_post_type();
+
+			if ($post_type === 'post') {
+				// Regular blog post
+				$categories = get_the_category();
+				if ($categories) {
+					$category = $categories[0];
+					get_taxonomy_hierarchy($category->term_id, 'category', $breadcrumbs, $position, $args['max_depth']);
+					add_breadcrumb($breadcrumbs, get_category_link($category), $category->name, $position);
 				}
-			} elseif (is_month()) {
-				// Month Archive Breadcrumb
-				$position += 1;
-				echo $sep . sprintf($link, get_year_link(get_the_time('Y')), get_the_time('Y'), $position);
-				if ($show_current) echo $sep . $before . get_the_time('F') . $after;
-			} elseif (is_day()) {
-				// Day Archive Breadcrumb
-				$position += 1;
-				echo $sep . sprintf($link, get_year_link(get_the_time('Y')), get_the_time('Y'), $position);
-				$position += 1;
-				echo $sep . sprintf($link, get_month_link(get_the_time('Y'), get_the_time('m')), get_the_time('F'), $position);
-				if ($show_current) echo $sep . $before . get_the_time('d') . $after;
+			} else {
+				// Custom post type
+				get_custom_post_hierarchy($post->ID, $post_type, $breadcrumbs, $position);
 			}
 
-			echo $wrap_after;
+			$current_title = $args['show_current'] ? get_the_title() : '';
+		} elseif (is_page()) {
+			if ($post->post_parent) {
+				get_page_hierarchy($post->ID, $breadcrumbs, $position, $args['max_depth']);
+			}
+			$current_title = $args['show_current'] ? get_the_title() : '';
+		} elseif (is_post_type_archive()) {
+			$post_type = get_query_var('post_type');
+			if (is_array($post_type)) {
+				$post_type = reset($post_type);
+			}
+			$post_type_obj = get_post_type_object($post_type);
+			$current_title = $args['show_current'] && $post_type_obj ? $post_type_obj->labels->name : '';
+		} elseif (is_tax()) {
+			$term = get_queried_object();
+			if ($term && !is_wp_error($term)) {
+				// Add post type archive if applicable
+				$post_types = get_taxonomy($term->taxonomy)->object_type;
+				if (!empty($post_types)) {
+					get_post_type_archive_breadcrumb($post_types[0], $breadcrumbs, $position);
+				}
+
+				get_taxonomy_hierarchy($term->term_id, $term->taxonomy, $breadcrumbs, $position, $args['max_depth']);
+				$current_title = $args['show_current'] ? $term->name : '';
+			}
+		} elseif (is_tag()) {
+			$current_title = $args['show_current'] ? sprintf($text['tag'], single_tag_title('', false)) : '';
+		} elseif (is_author()) {
+			$author = get_userdata(get_query_var('author'));
+			$current_title = $args['show_current'] && $author ? sprintf($text['author'], $author->display_name) : '';
+		} elseif (is_search()) {
+			$current_title = $args['show_current'] ? sprintf($text['search'], get_search_query()) : '';
+		} elseif (is_404()) {
+			$current_title = $args['show_current'] ? $text['404'] : '';
+		} elseif (is_year()) {
+			$current_title = $args['show_current'] ? sprintf($text['year'], get_the_time('Y')) : '';
+		} elseif (is_month()) {
+			add_breadcrumb($breadcrumbs, get_year_link(get_the_time('Y')), get_the_time('Y'), $position);
+			$current_title = $args['show_current'] ? sprintf($text['month'], get_the_time('F')) : '';
+		} elseif (is_day()) {
+			add_breadcrumb($breadcrumbs, get_year_link(get_the_time('Y')), get_the_time('Y'), $position);
+			add_breadcrumb($breadcrumbs, get_month_link(get_the_time('Y'), get_the_time('m')), get_the_time('F'), $position);
+			$current_title = $args['show_current'] ? sprintf($text['day'], get_the_time('d')) : '';
 		}
+
+		$breadcrumbs = apply_filters('lp_breadcrumbs_items', $breadcrumbs, $args);
+		$current_title = apply_filters('lp_breadcrumbs_current_title', $current_title ?? '', $args);
+
+		if (empty($breadcrumbs) && empty($current_title)) {
+			return;
+		}
+
+		echo $wrap_before;
+
+		foreach ($breadcrumbs as $index => $crumb) {
+			if ($index > 0) {
+				echo $sep;
+			}
+			printf($link_template, $crumb['url'], $crumb['title'], $crumb['position']);
+		}
+
+		if (!empty($current_title)) {
+			if (!empty($breadcrumbs)) {
+				echo $sep;
+			}
+			echo $before . esc_html($current_title) . $after;
+		} elseif ($args['show_last_sep'] && !empty($breadcrumbs)) {
+			echo $sep;
+		}
+
+		echo $wrap_after;
 	}
 }
 
@@ -827,7 +911,7 @@ if (!function_exists('lp_paging_nav')) {
 		$current_page = max(1, get_query_var('paged'));
 
 		if ($max_num_pages > 1) : ?>
-			<div class="flex items-center gap-8 mt-60">
+			<div class="mt-60 flex items-center gap-8">
 				<?php
 				// Previous button
 				if ($current_page > 1) : ?>
@@ -876,4 +960,24 @@ function icon($name, $selector = null)
 	$svg = preg_replace('/^<svg /', '<svg class="' . $selector . '" ', $svg);
 
 	echo $svg;
+}
+
+
+/**
+ * ------------------------------------------------------------------------------------------------
+ * translation
+ * ------------------------------------------------------------------------------------------------
+ */
+
+if (function_exists('pll_current_language')) {
+	function translate_pll($uk_text, $en_text)
+	{
+		$current_language = pll_current_language();
+
+		if ($current_language == "uk") {
+			return pll__($uk_text);
+		} else {
+			return pll__($en_text);
+		}
+	}
 }

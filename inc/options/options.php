@@ -37,7 +37,6 @@ if (function_exists('acf_add_options_page')) {
 require_once LP_THEMEROOT . '/inc/options/developers-settings.php';
 require_once LP_THEMEROOT . '/inc/options/clients-settings.php';
 require_once LP_THEMEROOT . '/inc/options/seo.php';
-require_once LP_THEMEROOT . '/inc/options/schema-org.php';
 require_once LP_THEMEROOT . '/inc/options/blog-settings.php';
 
 /**
