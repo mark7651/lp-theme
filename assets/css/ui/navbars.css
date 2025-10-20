@@ -1,0 +1,55 @@
+.main-nav a,
+.menu a {
+	@apply relative py-8 w-fit leading-[1] flex items-center justify-center whitespace-nowrap font-medium tracking-[-0.03em] text-[14px] xl:text-[20px];
+}
+
+.main-nav a::after,
+.menu a::after {
+	@apply content-[''] absolute top-0 left-0 w-full h-[.05em] pointer-events-none bg-current;
+	transform-origin: 100% 50%;
+	transform: scale3d(0, 1, 1);
+	transition: transform 0.5s;
+}
+
+.main-nav ul {
+	@apply flex gap-30 items-center;
+}
+.menu-item-has-children {
+	@apply relative;
+}
+ul.sub-menu {
+	@apply bg-gray-3 rounded-[10px] absolute left-0 flex flex-col justify-start items-start m-0 z-[10] pointer-events-none opacity-0 invisible w-[17rem] p-30 text-gray gap-16 translate-y-[1rem];
+	box-shadow: 0 9px 40px -12px rgba(86, 86, 86, 0.25);
+	transition: opacity 0.2s ease, visibility 0.2s ease,
+		-webkit-transform 0.2s ease;
+	transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+	transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease,
+		-webkit-transform 0.2s ease;
+}
+.sub-menu a {
+	@apply py-0 lg:py-10;
+}
+
+.mobile-menu a {
+	font-size: min(45px, calc(30px + 15 * (100vw - 320px) / 1640));
+	@apply font-medium tracking-[-0.03em] leading-[115%] text-black;
+}
+.mobile-menu .menu-item-has-children > a {
+	@apply text-gray-2 text-[16px];
+}
+.mobile-menu ul.sub-menu {
+	@apply relative visible opacity-100 bg-primary p-0 mb-30 gap-[4px] pointer-events-auto;
+}
+.mobile-menu ul {
+	@apply flex-col items-start gap-10;
+}
+@media (hover: hover) {
+	.menu-item-has-children:hover .sub-menu {
+		@apply translate-y-0 visible opacity-100 pointer-events-auto;
+	}
+	.main-nav a:hover::after,
+	.menu a:hover::after {
+		transform-origin: 0% 50%;
+		transform: scale3d(1, 1, 1);
+	}
+}

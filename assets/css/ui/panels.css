@@ -1,8 +1,8 @@
 .overlay {
-	@apply fixed inset-0 size-full z-[600] opacity-0 invisible bg-black/85 backdrop-blur-[100px] transition-opacity duration-600;
+	@apply fixed inset-0 size-full z-[600] opacity-0 invisible bg-black/85 backdrop-blur-[32px] transition-opacity duration-600;
 }
 .panel-fill {
-	@apply fixed top-0 right-0 bottom-0 z-[973] h-screen w-full max-w-[50rem] origin-right bg-white translate-x-[120%] pointer-events-none transition-all duration-500;
+	@apply fixed top-0 right-0 bottom-0 z-[973] h-screen w-full max-w-700 origin-right bg-white translate-x-[120%] pointer-events-none transition-all duration-500;
 }
 .panel-showed {
 	@apply overflow-hidden;

@@ -5,12 +5,10 @@
 get_header() ?>
 
 <div class="min-h-[80vh] grid place-content-center h-full text-center">
-
-	<h1 class="font-bold text-8xl">404</h1>
+	<h1 class="heading-1">404</h1>
 	<div class="mt-4">
-		<h2 class="text-h3"><?php _e('Nothing Found', 'lptheme'); ?></h2>
+		<p class="heading-4"><?php _e('Nothing Found', 'lptheme'); ?></p>
 	</div>
-
 </div>
 
 <?php get_footer() ?>

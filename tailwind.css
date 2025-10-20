@@ -3,14 +3,12 @@ Theme Name: lptheme
 Author: lpunity.com
 Description: Starter Theme
 Version: 6.0.0
-Tested up to: 8.2
-Requires PHP: 7.4
+Tested up to: 8.4
+Requires PHP: 8.0
 License: GNU General Public License v2 or later
 License URI: LICENSE
 Text Domain: lptheme
-Tags: custom-background, custom-logo, custom-menu, featured-images
-
-This theme, like WordPress, is licensed under the GPL.
+Tags: seo, custom fields, custom menu walker, fast loading
 */
 
 @import 'tailwindcss';
@@ -25,6 +23,7 @@ This theme, like WordPress, is licensed under the GPL.
 @import './assets/css/base.css' layer(base);
 
 @import './assets/css/ui/typography.css' layer(base);
+@import './assets/css/ui/navbars.css' layer(base);
 @import './assets/css/ui/buttons.css' layer(base);
 @import './assets/css/ui/inputs.css' layer(base);
 @import './assets/css/ui/panels.css' layer(base);
@@ -40,7 +39,6 @@ This theme, like WordPress, is licensed under the GPL.
 	--*: initial;
 
 	--spacing: 1px;
-
 	--root-size: 20px;
 
 	--font-main: 'Noah', system-ui;
@@ -53,7 +51,7 @@ This theme, like WordPress, is licensed under the GPL.
 	--color-gray-2: #f5f7f8;
 	--color-gray-3: #dae1e6;
 	--color-red: red;
-	--color-border: #000;
+	--color-border: #eee;
 
 	--breakpoint-sm: 40rem;
 	--breakpoint-md: 48rem;
@@ -103,7 +101,7 @@ This theme, like WordPress, is licensed under the GPL.
 	--shadow-xl: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
 	--shadow-2xl: 0 25px 50px -12px #00000040;
 
-	--default-transition-duration: 250ms;
+	--default-transition-duration: 350ms;
 	--default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 
 	--animate-spin: spin 2s linear infinite;
@@ -111,6 +109,7 @@ This theme, like WordPress, is licensed under the GPL.
 	--animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	--animate-bounce: bounce 1s infinite;
 	--animate-fade-in: fade-in 1s ease;
+	--animate-fade-out: fade-out 1s ease;
 	--animate-ripple: ripple 0.6s linear;
 
 	@keyframes ripple {
@@ -128,5 +127,12 @@ This theme, like WordPress, is licensed under the GPL.
 			opacity: 1;
 		}
 	}
+	@keyframes fade-out {
+		from {
+			opacity: 1;
+		}
+		to {
+			opacity: 0;
+		}
+	}
 }
-

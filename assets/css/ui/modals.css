@@ -11,7 +11,7 @@
 }
 
 .modal-content {
-	@apply relative w-full pointer-events-auto opacity-0 bg-white rounded-lg max-w-[422px] p-16 xl:p-24 m-auto border-border;
+	@apply relative w-full pointer-events-auto opacity-0 bg-white rounded-lg max-w-420 p-16 xl:p-24 m-auto border-border;
 }
 
 .modal-show .modal-content {
@@ -23,7 +23,7 @@
 }
 
 .modal-overlay {
-	@apply fixed inset-0 bg-black/25 backdrop-blur-[20px] opacity-0 invisible transition-opacity duration-600 
+	@apply fixed inset-0 bg-black/25 backdrop-blur-[32px] opacity-0 invisible transition-opacity duration-600 
 	z-[999];
 }
 

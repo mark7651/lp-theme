@@ -1,11 +1,11 @@
 {
 	"name": "lptheme",
-	"version": "1.0.0",
+	"version": "1.0.3",
 	"description": "lptheme",
 	"scripts": {
 		"watch": "npx @tailwindcss/cli -i ./tailwind.css -o ./style.css --watch",
 		"minify": "npx tailwindcss -i ./tailwind.css -o ./style.min.css --minify",
-		"browser-sync": "browser-sync start --proxy 'obra.local' --files '**/*.php, **/*.css, **/**/*.css, **/*.js'"
+		"browser-sync": "browser-sync start --proxy 'website.local' --files '**/*.php, **/*.css, **/**/*.css, **/*.js'"
 	},
 	"devDependencies": {
 		"browser-sync": "latest",

@@ -311,7 +311,7 @@ if (function_exists('acf_add_local_field_group')):
             ),
             array(
                 'key' => 'field_sdgdrcc2fd69235',
-                'label' => esc_html__('Addres', 'lptheme'),
+                'label' => esc_html__('Address', 'lptheme'),
                 'name' => 'address',
                 'type' => 'textarea',
                 'instructions' => '',
@@ -620,7 +620,7 @@ if (function_exists('acf_add_local_field_group')):
                 'maxlength' => '',
             ),
 
-            // ADD THIS BEFORE THE ANALYTICS TAB IN YOUR EXISTING client-settings.php
+            // Schema.org
 
             array(
                 'key' => 'field_schema_tab553f',

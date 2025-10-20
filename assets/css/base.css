@@ -8,7 +8,7 @@ html {
 }
 
 body {
-	@apply bg-white text-black min-w-[280px] mx-auto;
+	@apply bg-white text-black min-w-280 mx-auto;
 }
 
 .lenis.lenis-smooth [data-lenis-prevent] {
@@ -82,7 +82,7 @@ section {
 	@apply relative;
 }
 .container {
-	@apply relative mx-auto px-[10px] md:px-[20px] 2xl:px-[40px];
+	@apply relative mx-auto px-10 md:px-20 2xl:px-40;
 }
 .section {
 	@apply relative;

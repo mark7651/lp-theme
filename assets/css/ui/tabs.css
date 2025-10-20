@@ -8,7 +8,7 @@
 	@apply bg-bg-surface rounded-xl;
 }
 .tab {
-	@apply gap-10 text-dark-blue-3 bg-transparent text-[16px] xl:text-[20px] h-52 lg:h-56 hover:brightness-125;
+	@apply gap-10 bg-transparent text-[16px] xl:text-[20px] h-52 lg:h-56 hover:brightness-125;
 }
 .tab.active {
 	@apply text-black bg-primary hover:brightness-125;
