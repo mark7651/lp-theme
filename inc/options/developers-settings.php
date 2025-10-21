@@ -527,6 +527,26 @@ if (function_exists('acf_add_local_field_group')):
             ),
 
             array(
+                'key' => 'field_disalecomme8',
+                'label' => 'Enable comments',
+                'name' => 'enable_comments',
+                'type' => 'true_false',
+                'instructions' => '',
+                'required' => 0,
+                'conditional_logic' => 0,
+                'wrapper' => array(
+                    'width' => '25',
+                    'class' => '',
+                    'id' => '',
+                ),
+                'message' => '',
+                'default_value' => 0,
+                'ui' => 1,
+                'ui_on_text' => 'Вкл',
+                'ui_off_text' => 'Выкл',
+            ),
+
+            array(
                 'key' => 'field_9hkjkn78f',
                 'label' => '<span class="dashicons dashicons-editor-spellcheck"></span> Шрифты',
                 'name' => '',

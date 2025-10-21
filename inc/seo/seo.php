@@ -71,7 +71,6 @@ function custom_wp_remove_global_css()
 }
 add_action('init', 'custom_wp_remove_global_css');
 
-// disable other styles ==========================================================================
 if (! function_exists('lp_remove_styles')) {
 	function lp_remove_styles()
 	{
@@ -89,31 +88,33 @@ if (! function_exists('lp_remove_styles')) {
 	add_action('wp_enqueue_scripts', 'lp_remove_styles', 1000);
 }
 
+
 /**
  * ------------------------------------------------------------------------------------------------
  * disable heartbeat api
  * ------------------------------------------------------------------------------------------------
  */
 
-if (! function_exists('lp_stop_heartbeat')) {
+if (!function_exists('lp_stop_heartbeat')) {
 	function lp_stop_heartbeat()
 	{
 		if (!get_field('enable_heartbeat_api', 'option')) return;
-		wp_deregister_script('heartbeat');
+		//wp_deregister_script('heartbeat');
+		add_filter('heartbeat_send', '__return_false');
 	}
 	add_action('init', 'lp_stop_heartbeat', 1);
 }
 
 /**
  * ------------------------------------------------------------------------------------------------
- * clean header stuff
+ * clean some stuff
  * ------------------------------------------------------------------------------------------------
  */
 
 if (! get_field('enable_rest_api', 'option')) {
-	// Отключаем сам REST API
+
 	add_filter('rest_enabled', '__return_false');
-	// Отключаем фильтры REST API
+	// filters REST API
 	remove_action('xmlrpc_rsd_apis',            'rest_output_rsd');
 	remove_action('wp_head',                    'rest_output_link_wp_head', 10, 0);
 	remove_action('template_redirect',          'rest_output_link_header', 11, 0);
@@ -124,17 +125,25 @@ if (! get_field('enable_rest_api', 'option')) {
 	remove_action('auth_cookie_valid',          'rest_cookie_collect_status');
 	remove_filter('rest_authentication_errors', 'rest_cookie_check_errors', 100);
 
-	// Отключаем события REST API
+	// events REST API
 	remove_action('init',          'rest_api_init');
 	remove_action('rest_api_init', 'rest_api_default_filters', 10, 1);
 	remove_action('parse_request', 'rest_api_loaded');
 
-	// Отключаем Embeds связанные с REST API
-	remove_action('rest_api_init',          'wp_oembed_register_route');
-	remove_filter('rest_pre_serve_request', '_oembed_rest_pre_serve_request', 10, 4);
-	remove_action('wp_head', 'wp_oembed_add_discovery_links');
-	remove_action('wp_head', 'wp_oembed_add_host_js');
+	//Embeds connected with REST API =================
 	remove_filter('the_content', 'wptexturize');
+	// Remove REST API endpoint for embeds
+	remove_action('rest_api_init', 'wp_oembed_register_route');
+	// Turn off oEmbed auto discovery
+	remove_filter('rest_pre_serve_request', '_oembed_rest_pre_serve_request', 10);
+	// Don't filter oEmbed results
+	remove_filter('oembed_dataparse', 'wp_filter_oembed_result', 10);
+	// Remove oEmbed discovery links
+	remove_action('wp_head', 'wp_oembed_add_discovery_links');
+	// Remove oEmbed JavaScript from header
+	remove_action('wp_head', 'wp_oembed_add_host_js');
+	// Remove filter of the oEmbed result before any HTTP requests are made
+	remove_filter('pre_oembed_result', 'wp_filter_pre_oembed_result', 10);
 }
 
 function fb_disable_feed()
@@ -165,12 +174,50 @@ remove_action('admin_print_scripts', 'print_emoji_detection_script');
 remove_action('wp_print_styles', 'print_emoji_styles');
 remove_action('admin_print_styles', 'print_emoji_styles');
 
+function disable_xmlrpc()
+{
+	add_filter('xmlrpc_enabled', '__return_false');
+}
+add_action('init', 'disable_xmlrpc');
 
-// remove users from wp-sitemap ==========================================================================
+// remove users from wp-sitemap 
 add_filter('wp_sitemaps_add_provider', function ($provider, $name) {
 	return ($name == 'users') ? false : $provider;
 }, 10, 2);
 
+// Disable pingbacks completely
+function disable_pingbacks(&$links)
+{
+	foreach ($links as $l => $link) {
+		if (0 === strpos($link, get_option('home'))) {
+			unset($links[$l]);
+		}
+	}
+}
+add_action('pre_ping', 'disable_pingbacks');
+
+// Remove pingback header
+function remove_pingback_header($headers)
+{
+	if (isset($headers['X-Pingback'])) {
+		unset($headers['X-Pingback']);
+	}
+	return $headers;
+}
+add_filter('wp_headers', 'remove_pingback_header');
+
+
+// disable commnets globally
+if (! get_field('enable_comments', 'option')) {
+	add_action('admin_init', function () {
+		foreach (get_post_types() as $type) {
+			if (post_type_supports($type, 'comments')) {
+				remove_post_type_support($type, 'comments');
+				remove_post_type_support($type, 'trackbacks');
+			}
+		}
+	});
+}
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -180,154 +227,131 @@ add_filter('wp_sitemaps_add_provider', function ($provider, $name) {
 
 class WP_HTML_Compression
 {
-
+	// Settings
 	protected $compress_css = true;
 	protected $compress_js = true;
 	protected $info_comment = true;
 	protected $remove_comments = true;
-	protected $html;
 
+	// Variables
+	protected $html;
 	public function __construct($html)
 	{
-		if (! empty($html)) {
-			$this->parse_html($html);
+		if (!empty($html)) {
+			$this->parseHTML($html);
 		}
 	}
-
 	public function __toString()
 	{
 		return $this->html;
 	}
-
-	/**
-	 * Parse and minify the HTML content.
-	 *
-	 * @param string $html HTML content.
-	 */
-	protected function parse_html($html)
+	protected function bottomComment($raw, $compressed)
 	{
-		$this->html = $this->minify_html($html);
+		$raw = strlen($raw);
+		$compressed = strlen($compressed);
 
-		if ($this->info_comment) {
-			$this->html .= "\n<!-- HTML minified by WP_HTML_Compression -->";
-		}
+		$savings = ($raw - $compressed) / $raw * 100;
+
+		$savings = round($savings, 2);
+
+		// return '<!--HTML compressed, size saved ' . $savings . '%. From ' . $raw . ' bytes, now ' . $compressed . ' bytes-->';
 	}
-
-	protected function minify_html($html)
+	protected function minifyHTML($html)
 	{
-		// Don't minify if user is logged in or in admin area
-		if (is_admin() || is_user_logged_in()) {
-			return $html;
-		}
-
-		// Define regex patterns
-		$pattern = '/<(?<script>script).*?<\/script\s*>|<(?<style>style).*?<\/style\s*>|<!(?<comment>--).*?-->|<(?<tag>[\/\w.:-]*)(?:".*?"|\'.*?\'|[^\'">]+)*>|(?<text>((<[^!\/\w.:-])?[^<]*)+)/si';
+		$pattern = '/<(?<script>script).*?<\/script\s*>|<(?<style>style).*?<\/style\s*>|<!(?<comment>--).*?-->|<(?<tag>[\/\w.:-]*)(?:".*?"|\'.*?\'|[^\'">]+)*>|(?<text>((<[^!\/\w.:-])?[^<]*)+)|/si';
 		preg_match_all($pattern, $html, $matches, PREG_SET_ORDER);
-
-		$output = '';
 		$overriding = false;
 		$raw_tag = false;
-
+		// Variable reused for output
+		$html = '';
 		foreach ($matches as $token) {
-			$tag = isset($token['tag']) ? strtolower($token['tag']) : null;
+			$tag = (isset($token['tag'])) ? strtolower($token['tag']) : null;
+
 			$content = $token[0];
-			$strip = false;
 
 			if (is_null($tag)) {
-				if (! empty($token['script'])) {
+				if (!empty($token['script'])) {
 					$strip = $this->compress_js;
-					if ($strip) {
-						$content = $this->minify_js($content);
-					}
-				} elseif (! empty($token['style'])) {
+				} else if (!empty($token['style'])) {
 					$strip = $this->compress_css;
-					if ($strip) {
-						$content = $this->minify_css($content);
-					}
-				} elseif ($content === '<!--wp-html-compression no compression-->') {
-					$overriding = ! $overriding;
+				} else if ($content == '<!--wp-html-compression no compression-->') {
+					$overriding = !$overriding;
+
+					// Don't print the comment
 					continue;
-				} elseif ($this->remove_comments && ! $overriding && $raw_tag !== 'textarea') {
-					// Skip conditional comments and important comments
-					$content = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $content);
+				} else if ($this->remove_comments) {
+					if (!$overriding && $raw_tag != 'textarea') {
+						// Remove any HTML comments, except MSIE conditional comments
+						$content = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $content);
+					}
 				}
 			} else {
-				if (in_array($tag, ['pre', 'textarea', 'script'], true)) {
+				if ($tag == 'pre' || $tag == 'textarea') {
 					$raw_tag = $tag;
-				} elseif (in_array($tag, ['/pre', '/textarea', '/script'], true)) {
+				} else if ($tag == '/pre' || $tag == '/textarea') {
 					$raw_tag = false;
 				} else {
-					$strip = (! $raw_tag && ! $overriding);
-					if ($strip) {
-						// Remove unnecessary attributes and spaces
+					if ($raw_tag || $overriding) {
+						$strip = false;
+					} else {
+						$strip = true;
+
+						// Remove any empty attributes, except:
+						// action, alt, content, src
 						$content = preg_replace('/(\s+)(\w++(?<!\baction|\balt|\bcontent|\bsrc)="")/', '$1', $content);
+
+						// Remove any space before the end of self-closing XHTML tags
+						// JavaScript excluded
 						$content = str_replace(' />', '/>', $content);
 					}
 				}
 			}
 
-			if ($strip && ! $raw_tag) {
-				$content = $this->remove_whitespace($content);
+			if ($strip) {
+				$content = $this->removeWhiteSpace($content);
 			}
 
-			$output .= $content;
+			$html .= $content;
 		}
 
-		return $output;
+		return $html;
 	}
 
-	protected function minify_css($css)
+	public function parseHTML($html)
 	{
-		// Remove comments
-		$css = preg_replace('/\/\*.*?\*\//s', '', $css);
-		// Remove whitespace
-		$css = preg_replace('/\s+/', ' ', $css);
-		// Remove spaces around selectors, properties
-		$css = preg_replace('/\s*([{}:;,])\s*/', '$1', $css);
-		return $css;
+		$this->html = $this->minifyHTML($html);
+
+		if ($this->info_comment) {
+			$this->html .= "\n" . $this->bottomComment($html, $this->html);
+		}
 	}
 
-	protected function minify_js($js)
+	protected function removeWhiteSpace($str)
 	{
-		// Remove comments
-		$js = preg_replace('/\/\/.*$/m', '', $js);
-		$js = preg_replace('/\/\*.*?\*\//s', '', $js);
-		// Remove whitespace
-		$js = preg_replace('/\s+/', ' ', $js);
-		// Remove spaces around operators
-		$js = preg_replace('/\s*([=+\-{}();:,\[\]])\s*/', '$1', $js);
-		return $js;
-	}
+		$str = str_replace("\t", ' ', $str);
+		$str = str_replace("\n",  '', $str);
+		$str = str_replace("\r",  '', $str);
 
-	protected function remove_whitespace($str)
-	{
-		$str = str_replace(["\t", "\n", "\r"], ' ', $str);
-		$str = preg_replace('/\s+/', ' ', $str);
-		return trim($str);
-	}
-
-	public static function start()
-	{
-		if (is_admin() || defined('DOING_AJAX') || defined('DOING_CRON')) {
-			return;
+		while (stristr($str, '  ')) {
+			$str = str_replace('  ', ' ', $str);
 		}
 
-		ob_start([__CLASS__, 'output_callback']);
-	}
-
-	public static function output_callback($buffer)
-	{
-		if (empty($buffer) || strpos($buffer, '<html') === false) {
-			return $buffer;
-		}
-
-		$minifier = new self($buffer);
-		return (string) $minifier;
+		return $str;
 	}
 }
 
+function wp_html_compression_finish($html)
+{
+	return (string) new WP_HTML_Compression($html);
+}
+
+function wp_html_compression_start()
+{
+	ob_start('wp_html_compression_finish');
+}
+
 if (get_field('minify_html', 'option')) {
-	add_action('template_redirect', ['WP_HTML_Compression', 'start'], 1);
+	add_action('get_header', 'wp_html_compression_start');
 }
 
 /**
@@ -392,6 +416,7 @@ add_action('template_redirect', 'disable_uneeded_archives');
  * remove trailing_slash from attachment_image
  * ------------------------------------------------------------------------------------------------
  */
+
 function remove_trailing_slash_from_attachment_image($html)
 {
 	$pattern = '/\/>$/';
@@ -409,37 +434,44 @@ add_filter('wp_get_attachment_image', 'remove_trailing_slash_from_attachment_ima
 
 function lp_html_sitemap()
 {
-	$page_slug = 'sitemap-html';
-	$page_title = __('HTML Sitemap', 'lp-seo');
-	$template_path = 'templates/sitemap-html.php';
+	$page_slug     = 'sitemap-html';
+	$page_title    = __('HTML Sitemap', 'lp-seo');
+	$template_path = 'sitemap-html.php';
 
-	// Check if page already exists
-	$existing_page = get_page_by_path($page_slug, OBJECT, 'page');
+	// Stop if the page already exists by slug
+	if (get_page_by_path($page_slug, OBJECT, 'page')) {
+		return;
+	}
 
-	if (! $existing_page) {
-		$page_args = [
-			'post_type'      => 'page',
-			'post_title'     => $page_title,
-			'post_content'   => '',
-			'post_status'    => 'publish',
-			'post_author'    => 1,
-			'post_name'      => $page_slug,
-			'meta_input'     => [
-				'_wp_page_template' => $template_path,
-			],
-		];
+	// Stop if we've already created one and it still exists
+	$existing_id = get_option('lp_html_sitemap_id');
+	if ($existing_id && get_post_status($existing_id)) {
+		return;
+	}
 
-		$page_id = wp_insert_post($page_args, true);
+	$page_args = [
+		'post_type'      => 'page',
+		'post_title'     => $page_title,
+		'post_status'    => 'publish',
+		'post_author'    => get_current_user_id() ?: 1,
+		'post_name'      => $page_slug,
+		'meta_input'     => [
+			'_wp_page_template' => $template_path,
+		],
+	];
 
-		if (is_wp_error($page_id)) {
-			return;
-		}
+	$page_id = wp_insert_post($page_args);
+
+	if (!is_wp_error($page_id)) {
+		update_option('lp_html_sitemap_id', $page_id);
 	}
 }
 
 if (function_exists('get_field') && get_field('html_sitemap', 'option')) {
 	add_action('init', 'lp_html_sitemap');
 }
+
+
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -643,6 +675,7 @@ if (function_exists('pll_current_language')) {
  * Remove 'category' slug from post category URLs
  * ------------------------------------------------------------------------------------------------
  */
+
 function remove_category($string, $type)
 {
 	if ($type != 'single' && $type == 'category' && (strpos($string, 'category') !== false)) {
