@@ -660,6 +660,9 @@ if (function_exists('pll_current_language')) {
 		return '';
 	}
 
+	add_filter('pll_check_language_code_in_url', '__return_false');
+	add_filter('pll_load_strings_translations', '__return_false');
+
 	add_filter('pll_rel_hreflang_attributes', function ($hreflangs) {
 		$default_lang = function_exists('pll_default_language') ? pll_default_language() : 'en';
 

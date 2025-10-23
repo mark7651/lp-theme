@@ -642,6 +642,32 @@ function initSlider(selector, options = {}, customHandlers = {}) {
 	try {
 		const splide = new Splide(sliderElement, options)
 
+		if (options.autoplay) {
+			const observer = new IntersectionObserver(
+				entries => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting) {
+							splide.Components.Autoplay.play()
+						} else {
+							splide.Components.Autoplay.pause()
+						}
+					})
+				},
+				{
+					threshold: 0.5,
+					rootMargin: '0px',
+				}
+			)
+
+			splide.on('mounted', () => {
+				observer.observe(sliderElement)
+			})
+
+			splide.on('destroy', () => {
+				observer.disconnect()
+			})
+		}
+
 		if (customHandlers.onMounted) {
 			splide.on('mounted', () =>
 				customHandlers.onMounted(splide, sliderElement)
@@ -667,6 +693,8 @@ function initSlider(selector, options = {}, customHandlers = {}) {
 		}
 
 		splide.mount()
+
+		return splide
 	} catch (error) {
 		console.error(`Error initializing slider (${selector}):`, error)
 	}
