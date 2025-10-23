@@ -14,61 +14,89 @@ add_filter('big_image_size_threshold', '__return_false');
 add_filter('show_admin_bar', '__return_false');
 add_filter('wp_fatal_error_handler_enabled', '__return_false');
 
-
 /**
  * ------------------------------------------------------------------------------------------------
  * Custom color scheme (dark mode)
  * ------------------------------------------------------------------------------------------------
  */
 
-if (! function_exists('dark_mode_dashboard_add_styles')) {
-  function dark_mode_dashboard_add_styles()
+if (!function_exists('lp_dark_mode_dashboard_styles')) {
+  function lp_dark_mode_dashboard_styles()
   {
-    if (wp_get_current_user()->dark_mode_dashboard != 1) {
-      $dark_mode_dashboard_style = apply_filters('dark_mode_dashboard_css', LP_THEME_DIR . '/inc/admin/css/dark-mode.css');
-      wp_register_style('dark-mode-dashboard', $dark_mode_dashboard_style, array());
-      wp_enqueue_style('dark-mode-dashboard');
+    $current_user = wp_get_current_user();
+    $dark_mode_disabled = get_user_meta($current_user->ID, 'dark_mode_dashboard', true);
+
+    if ($dark_mode_disabled != '1') {
+      $dark_mode_css = apply_filters('lp_dark_mode_dashboard_css', get_template_directory_uri() . '/inc/admin/css/dark-mode.css');
+      wp_enqueue_style(
+        'lp-dark-mode-dashboard',
+        $dark_mode_css,
+        array(),
+        wp_get_theme()->get('Version')
+      );
+
       remove_action('admin_color_scheme_picker', 'admin_color_scheme_picker');
-      add_editor_style(LP_THEME_DIR . '/inc/admin/css/dark-editor-style.css');
+
+      add_editor_style(get_template_directory_uri() . '/inc/admin/css/dark-editor-style.css');
     } else {
-      add_editor_style(LP_THEME_DIR . '/inc/admin/css/editor-style.css');
+      add_editor_style(get_template_directory_uri() . '/inc/admin/css/editor-style.css');
     }
   }
-  add_action('admin_enqueue_scripts', 'dark_mode_dashboard_add_styles');
+  add_action('admin_enqueue_scripts', 'lp_dark_mode_dashboard_styles');
 }
 
-// Add field to user profile page
-add_action('show_user_profile', 'dark_mode_dashboard_user_profile_fields', 10, 1);
-add_action('edit_user_profile', 'dark_mode_dashboard_user_profile_fields', 10, 1);
 
-function dark_mode_dashboard_user_profile_fields($user)
-{ ?>
-  <h3><?php _e("Dark Mode for WP Dashboard", "blank"); ?></h3>
-  <table class="form-table">
+function lp_dark_mode_user_profile_fields($user)
+{
+?>
+  <h2><?php esc_html_e('Dark Mode Settings', 'lptheme'); ?></h2>
+  <table class="form-table" role="presentation">
     <tr>
-      <th><label for="darkmode"><?php _e('Disable darkmode?', 'lptheme'); ?></label></th>
+      <th scope="row">
+        <label for="lp_darkmode"><?php esc_html_e('Dashboard Appearance', 'lptheme'); ?></label>
+      </th>
       <td>
-        <input type="checkbox" name="dark_mode_dashboard" id="darkmode" value="1" <?php checked($user->dark_mode_dashboard, true, true); ?>>
+        <fieldset>
+          <label for="lp_darkmode">
+            <input
+              type="checkbox"
+              name="dark_mode_dashboard"
+              id="lp_darkmode"
+              value="1"
+              <?php checked(get_user_meta($user->ID, 'dark_mode_dashboard', true), '1'); ?>>
+            <?php esc_html_e('Disable dark mode (use WordPress default colors)', 'lptheme'); ?>
+          </label>
+          <p class="description">
+            <?php esc_html_e('By default, dark mode is enabled. Check this box to use the standard WordPress admin colors.', 'lptheme'); ?>
+          </p>
+        </fieldset>
       </td>
     </tr>
   </table>
-<?php }
+<?php
+}
+add_action('show_user_profile', 'lp_dark_mode_user_profile_fields', 10, 1);
+add_action('edit_user_profile', 'lp_dark_mode_user_profile_fields', 10, 1);
 
-// Save data from user profile field to database
-add_action('personal_options_update', 'dark_mode_dashboard_save_user_profile_fields');
-add_action('edit_user_profile_update', 'dark_mode_dashboard_save_user_profile_fields');
 
-function dark_mode_dashboard_save_user_profile_fields($user_id)
+function lp_dark_mode_save_user_profile_fields($user_id)
 {
-  if (empty($_POST['_wpnonce']) || ! wp_verify_nonce($_POST['_wpnonce'], 'update-user_' . $user_id)) {
+  if (empty($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'update-user_' . $user_id)) {
     return;
   }
 
   if (!current_user_can('edit_user', $user_id)) {
-    return false;
+    return;
   }
-  update_user_meta($user_id, 'dark_mode_dashboard', $_POST['dark_mode_dashboard']);
+
+  if (isset($_POST['dark_mode_dashboard']) && $_POST['dark_mode_dashboard'] === '1') {
+    update_user_meta($user_id, 'dark_mode_dashboard', '1');
+  } else {
+    delete_user_meta($user_id, 'dark_mode_dashboard');
+  }
 }
+add_action('personal_options_update', 'lp_dark_mode_save_user_profile_fields');
+add_action('edit_user_profile_update', 'lp_dark_mode_save_user_profile_fields');
 
 
 /**
@@ -119,11 +147,18 @@ function shatel_view($wp_admin_bar)
 add_action('admin_bar_menu', 'shatel_view', 999);
 
 // decline wrap <p> 
-function remove_img_ptags_func($content)
+function lp_remove_img_ptags($content)
 {
-  return preg_replace('/<p>\s*((?:<a[^>]+>)?\s*<img[^>]+>\s*(?:<\/a>)?)\s*<\/p>/i', '\1', $content);
+  if (!has_shortcode($content, 'gallery') && strpos($content, '<img') === false) {
+    return $content;
+  }
+
+  $content = preg_replace('/<p>\s*(<a.*?<img.*?<\/a>)\s*<\/p>/is', '$1', $content);
+  $content = preg_replace('/<p>\s*(<img.*?>)\s*<\/p>/is', '$1', $content);
+
+  return $content;
 }
-add_filter('the_content', 'remove_img_ptags_func');
+add_filter('the_content', 'lp_remove_img_ptags');
 
 // login page custom css
 if (! function_exists('lp_login_style')) {
@@ -135,47 +170,43 @@ if (! function_exists('lp_login_style')) {
 }
 
 // custom login logo
-if (get_field('header_logo_svg', 'option')) {
-  add_action('login_head', 'lp_login_logo');
-  function lp_login_logo()
-  {
-    $login_logo = get_field('header_logo_svg', 'option');
-    echo '<style> h1 a { background: url(' . esc_url(wp_get_attachment_url($login_logo)) . ') no-repeat 50% 50%/contain!important; height: 150px!important;width: auto!important;}
-    </style>';
-  }
-} else {
-  add_action('login_head', 'lp_login_logo');
-  function lp_login_logo()
-  {
-    $login_logo = get_field('header_logo', 'option');
-    echo '<style> h1 a { background: url(' . esc_url(wp_get_attachment_url($login_logo)) . ') no-repeat 50% 50%/contain!important; height: 150px!important;width: auto!important;}
-    </style>';
-  }
-}
+function lp_login_logo()
+{
+  $login_logo = get_field('header_logo_svg', 'option') ?: get_field('header_logo', 'option');
 
-// changing the logo link from wordpress.org to your site
+  if (!$login_logo) {
+    return;
+  }
+
+  $logo_url = esc_url(wp_get_attachment_url($login_logo));
+?>
+  <style>
+    #login h1 a,
+    .login h1 a {
+      background-image: url(<?php echo $logo_url; ?>);
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
+      width: 320px;
+      height: 150px;
+      margin: 0 auto 25px;
+    }
+  </style>
+<?php
+}
+add_action('login_enqueue_scripts', 'lp_login_logo');
+
 function mb_login_url()
 {
-  return home_url();
+  return esc_url(home_url('/'));
 }
 add_filter('login_headerurl', 'mb_login_url');
+
 function mb_login_title()
 {
-  return get_option('blogname');
+  return esc_attr(get_bloginfo('name'));
 }
 add_filter('login_headertext', 'mb_login_title');
-
-/**
- * ------------------------------------------------------------------------------------------------
- * disable revisions
- * ------------------------------------------------------------------------------------------------
- */
-
-function deactivate_revisions($count)
-{
-  return 0;
-}
-add_filter('wp_revisions_to_keep', 'deactivate_revisions');
 
 
 /**
@@ -269,7 +300,11 @@ if (! function_exists('lp_remove_dashboard_meta')) {
 
 function status_dashboard_widgets()
 {
-  wp_add_dashboard_widget('status_dashboard_widget', 'Website status info', 'status_theme_info');
+  wp_add_dashboard_widget(
+    'status_dashboard_widget',
+    __('Website Status Info', 'lptheme'),
+    'status_theme_info'
+  );
 }
 
 function status_theme_info()
@@ -278,16 +313,16 @@ function status_theme_info()
 
     <li>
       <span class="lptheme-status-key">
-        <?php _ex('Website title', 'Site / server status', 'lptheme'); ?>
+        <?php esc_html_e('Site Title'); ?>
       </span>
       <span class="lptheme-status-value">
         <?php if (is_network_admin()) { ?>
-          <a href="<?php echo esc_url(admin_url('network/settings.php')); ?>" title="<?php echo esc_attr(__('Change', 'lptheme')); ?>">
-            <?php echo get_site_option('site_name'); ?>
+          <a href="<?php echo esc_url(admin_url('network/settings.php')); ?>">
+            <?php echo esc_html(get_site_option('site_name')); ?>
           </a>
         <?php } else { ?>
-          <a href="<?php echo esc_url(admin_url('options-general.php')); ?>" title="<?php echo esc_attr(__('Change', 'lptheme')); ?>">
-            <?php echo get_bloginfo('name'); ?>
+          <a href="<?php echo esc_url(admin_url('options-general.php')); ?>">
+            <?php echo esc_html(get_bloginfo('name')); ?>
           </a>
         <?php } ?>
       </span>
@@ -295,86 +330,57 @@ function status_theme_info()
 
     <li>
       <span class="lptheme-status-key">
-        <?php _ex('Sitemap XML', 'Site / server status', 'lptheme'); ?>
+        <?php esc_html_e('Sitemap', 'lptheme'); ?>
       </span>
       <span class="lptheme-status-value">
-        <a href="<?php echo esc_url(home_url()); ?>/wp-sitemap.xml" target="_blank" title="<?php _e('Visit', 'lptheme'); ?>"><?php echo home_url(); ?>/wp-sitemap.xml</a>
+        <a href="<?php echo esc_url(home_url('/wp-sitemap.xml')); ?>" target="_blank">
+          <?php esc_html_e('View Sitemap', 'lptheme'); ?> →
+        </a>
       </span>
     </li>
 
     <li>
       <span class="lptheme-status-key">
-        <?php _ex('Admin Email', 'Site / server status', 'lptheme'); ?>
+        <?php esc_html_e('Administration Email Address'); ?>
       </span>
       <span class="lptheme-status-value">
         <?php if (is_network_admin()) { ?>
-          <?php echo get_site_option('admin_email'); ?>
+          <a href="mailto:<?php echo esc_attr(get_site_option('admin_email')); ?>">
+            <?php echo esc_html(get_site_option('admin_email')); ?>
+          </a>
         <?php } else { ?>
-          <?php echo get_bloginfo('admin_email'); ?>
+          <a href="mailto:<?php echo esc_attr(get_bloginfo('admin_email')); ?>">
+            <?php echo esc_html(get_bloginfo('admin_email')); ?>
+          </a>
         <?php } ?>
       </span>
     </li>
 
-    <?php if (! is_network_admin()) { ?>
-      <li>
-        <span class="lptheme-status-key">
-          <?php _e('Comments', 'lptheme'); ?>
-        </span>
-        <span class="lptheme-status-value">
-          <?php $comment_count = wp_count_comments(); ?>
-          <?php echo $comment_count->total_comments; ?>
-        </span>
-      </li>
-    <?php } ?>
-
-
     <li>
       <span class="lptheme-status-key">
-        <?php _ex('Debug mode', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo (defined('WP_DEBUG') && WP_DEBUG) ? __('On', 'lptheme') : __('Off', 'lptheme'); ?>
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('Post revisions', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo (defined('WP_POST_REVISIONS') && ! WP_POST_REVISIONS) ? __('Off', 'lptheme') : (WP_POST_REVISIONS === true ? __('On', 'lptheme') : WP_POST_REVISIONS); ?>
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('Theme/plugin file editor', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo (defined('DISALLOW_FILE_EDIT')) ? __('Off', 'lptheme') : __('On', 'lptheme'); ?>
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('WP Cron', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo (defined('DISABLE_WP_CRON')) ? __('Off', 'lptheme') : __('On', 'lptheme'); ?>
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('Media folder writable', 'Site / server status', 'lptheme'); ?>
+        <?php esc_html_e('Debug mode', 'lptheme'); ?>
       </span>
       <span class="lptheme-status-value">
         <?php
-        $upload_dir = wp_upload_dir();
-        if (! file_exists($upload_dir['basedir'])) {
-          echo __('Not found', 'lptheme');
+        echo (defined('WP_DEBUG') && WP_DEBUG)
+          ? esc_html_x('On', 'Debug mode status')
+          : esc_html_x('Off', 'Debug mode status');
+        ?>
+      </span>
+    </li>
+
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('Post revisions', 'lptheme'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php
+        if (defined('WP_POST_REVISIONS') && !WP_POST_REVISIONS) {
+          echo esc_html_x('Off', 'Post revisions status');
+        } elseif (WP_POST_REVISIONS === true) {
+          echo esc_html_x('On', 'Post revisions status');
         } else {
-          echo is_writable($upload_dir['basedir']) ? __('Yes', 'lptheme') : __('No', 'lptheme');
+          echo esc_html(WP_POST_REVISIONS);
         }
         ?>
       </span>
@@ -382,87 +388,122 @@ function status_theme_info()
 
     <li>
       <span class="lptheme-status-key">
-        <?php _ex('Max upload size', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo strtolower(ini_get('upload_max_filesize')); ?>
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('Max execution time', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo ini_get('max_execution_time'); ?>s
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('PHP version', 'Site / server status', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php echo phpversion(); ?>
-      </span>
-    </li>
-
-    <?php if (is_network_admin()) { ?>
-      <?php $sitestats = get_sitestats(); ?>
-      <?php if (isset($sitestats['blogs'])) { ?>
-        <li>
-          <span class="lptheme-status-key">
-            <?php _e('Sites', 'lptheme'); ?>
-          </span>
-          <span class="lptheme-status-value">
-            <?php echo $sitestats['blogs']; ?>
-          </span>
-        </li>
-      <?php } ?>
-    <?php } ?>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _ex('Users', 'User count', 'lptheme'); ?>
-      </span>
-      <span class="lptheme-status-value">
-        <?php if (function_exists('get_user_count')) { ?>
-          <?php echo get_user_count(); ?>
-        <?php } else { ?>
-          <?php $user_count = count_users(); ?>
-          <?php echo $user_count['total_users']; ?>
-        <?php } ?>
-      </span>
-    </li>
-
-    <li>
-      <span class="lptheme-status-key">
-        <?php _e('Plugins', 'lptheme'); ?>
+        <?php esc_html_e('File editor', 'lptheme'); ?>
       </span>
       <span class="lptheme-status-value">
         <?php
-        $plugin_count = get_transient('plugin_slugs');
-        $plugin_count = $plugin_count ? $plugin_count : array_keys(get_plugins());
-        echo count($plugin_count);
+        echo (defined('DISALLOW_FILE_EDIT') && DISALLOW_FILE_EDIT)
+          ? esc_html_x('Off', 'File editor status')
+          : esc_html_x('On', 'File editor status');
         ?>
       </span>
     </li>
 
-    <?php if (is_network_admin()) { ?>
-      <?php $theme_count = get_site_transient('update_themes'); ?>
-      <?php if ($theme_count && isset($theme_count->checked)) { ?>
-        <li>
-          <span class="lptheme-status-key">
-            <?php _e('Themes', 'lptheme'); ?>
-          </span>
-          <span class="lptheme-status-value">
-            <?php echo count($theme_count->checked); ?>
-          </span>
-        </li>
-      <?php } ?>
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('WP-Cron'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php
+        echo (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON)
+          ? esc_html_x('Off', 'WP-Cron status')
+          : esc_html_x('On', 'WP-Cron status');
+        ?>
+      </span>
+    </li>
+
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('Media folder writable', 'lptheme'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php
+        $upload_dir = wp_upload_dir();
+        if (!file_exists($upload_dir['basedir'])) {
+          echo esc_html__('Not found', 'lptheme');
+        } else {
+          echo is_writable($upload_dir['basedir'])
+            ? esc_html_x('Yes', 'Media folder writable')
+            : esc_html_x('No', 'Media folder writable');
+        }
+        ?>
+      </span>
+    </li>
+
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('Max upload size', 'lptheme'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php echo esc_html(size_format(wp_max_upload_size())); ?>
+      </span>
+    </li>
+
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('Max execution time', 'lptheme'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php echo esc_html(ini_get('max_execution_time')); ?>s
+      </span>
+    </li>
+
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('Memory limit', 'lptheme'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php echo esc_html(ini_get('memory_limit')); ?>
+      </span>
+    </li>
+
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('PHP version'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php echo esc_html(phpversion()); ?>
+      </span>
+    </li>
+
+    <?php if (!is_network_admin()) { ?>
+      <li>
+        <span class="lptheme-status-key">
+          <?php esc_html_e('Posts'); ?>
+        </span>
+        <span class="lptheme-status-value">
+          <?php echo esc_html(wp_count_posts('post')->publish); ?>
+        </span>
+      </li>
+
+      <li>
+        <span class="lptheme-status-key">
+          <?php esc_html_e('Pages'); ?>
+        </span>
+        <span class="lptheme-status-value">
+          <?php echo esc_html(wp_count_posts('page')->publish); ?>
+        </span>
+      </li>
     <?php } ?>
 
+    <li>
+      <span class="lptheme-status-key">
+        <?php esc_html_e('Users'); ?>
+      </span>
+      <span class="lptheme-status-value">
+        <?php
+        if (function_exists('get_user_count')) {
+          echo esc_html(get_user_count());
+        } else {
+          $user_count = count_users();
+          echo esc_html($user_count['total_users']);
+        }
+        ?>
+      </span>
+    </li>
+
   </ul>
+
 <?php }
 
 if (get_field('status_dashboard', 'option')) {
@@ -494,3 +535,73 @@ function lp_theme_info()
 if (get_field('developer_dashboard', 'option')) {
   add_action('wp_dashboard_setup', 'lp_info_dashboard_widgets');
 }
+
+
+/**
+ * ------------------------------------------------------------------------------------------------
+ * Custom welcome panel 
+ * ------------------------------------------------------------------------------------------------
+ */
+
+function lp_custom_welcome_panel()
+{
+  $screen = get_current_screen();
+  $user = wp_get_current_user();
+?>
+  <div class="welcome-panel__wrap">
+    <h2><?php printf(__('%s'), esc_html(get_bloginfo('name'))); ?></h2>
+    <hr>
+
+    <div class="welcome-panel-container">
+
+      <!-- Column 1: Content -->
+      <div class="flex flex-col">
+        <a class="button button-primary button-hero" href="<?php echo admin_url('post-new.php'); ?>">
+          <?php _e('Add Post'); ?>
+        </a>
+        <a class="button button-hero" href="<?php echo admin_url('post-new.php?post_type=page'); ?>">
+          <?php _e('Add Page'); ?>
+        </a>
+      </div>
+
+      <!-- Column 2: Customize -->
+      <div class="flex flex-col gap-10">
+        <ul class="columns-2">
+          <li>
+            <a href="<?php echo admin_url('admin.php?page=customers-settings'); ?>" class="welcome-icon welcome-learn-more">
+              <?php _e('Settings'); ?>
+            </a>
+          </li>
+          <li>
+            <a href="<?php echo admin_url('users.php'); ?>" class="welcome-icon welcome-add-page">
+              <?php _e('Users'); ?>
+            </a>
+          </li>
+          <li>
+            <a href="<?php echo admin_url('nav-menus.php'); ?>" class="welcome-icon welcome-widgets-menus">
+              <?php _e('Menus'); ?>
+            </a>
+          </li>
+
+          <li>
+            <a href="<?php echo home_url('/'); ?>" target="_blank" class="welcome-icon welcome-view-site">
+              <?php _e('View Site'); ?>
+            </a>
+          </li>
+          <li>
+            <a href="<?php echo admin_url('upload.php'); ?>" class="welcome-icon welcome-add-page">
+              <?php _e('Add media'); ?>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+
+
+    </div>
+  </div>
+<?php
+}
+
+remove_action('welcome_panel', 'wp_welcome_panel');
+add_action('welcome_panel', 'lp_custom_welcome_panel');

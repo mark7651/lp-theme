@@ -1,94 +1,129 @@
 :root {
-  scroll-behavior: smooth;
+	scroll-behavior: smooth;
 }
- *, ::after, ::before {
-  -webkit-font-smoothing: antialiased;
-  -moz-font-smoothing: antialiased;
-  -o-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-overflow-scrolling: touch;
-  outline: none;
+*,
+::after,
+::before {
+	-webkit-font-smoothing: antialiased;
+	-moz-font-smoothing: antialiased;
+	-o-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+	-moz-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-overflow-scrolling: touch;
+	outline: none;
 }
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 2px;
-  border-radius: 4px;
+	width: 4px;
+	height: 2px;
+	border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #8ab4f8;
- cursor: pointer; 
+	background: #8ab4f8;
+	cursor: pointer;
 }
 ::-webkit-scrollbar-track {
-  visibility: hidden;
+	visibility: hidden;
 }
 
 .lptheme-status-list li {
-  display: flex;
-  justify-content: space-between;
-  padding: 7px 10px;
-  margin: 0;
+	display: flex;
+	justify-content: space-between;
+	padding: 7px 10px;
+	margin: 0;
 }
 
 /* acf styles */
 .acf-input .acf-radio-list label img {
-  flex: 0 0 50%;
-  width: 50%;
-  border-style: solid;
-  border-width: 3px;
-  border-color: #e7e7e7;
-  border-radius: 4px;
-  margin: 15px 10px 10px;
-  position: relative;
-    padding-left: 6px;
-    padding-right: 6px;
+	flex: 0 0 50%;
+	width: 50%;
+	border-style: solid;
+	border-width: 3px;
+	border-color: #e7e7e7;
+	border-radius: 4px;
+	margin: 15px 10px 10px;
+	position: relative;
+	padding-left: 6px;
+	padding-right: 6px;
 }
-.acf-input .acf-radio-list label img:hover, .acf-input .acf-radio-list label.selected img{
-  border-color: #007cba;
+.acf-input .acf-radio-list label img:hover,
+.acf-input .acf-radio-list label.selected img {
+	border-color: #007cba;
 }
-.acf-input  .acf-radio-list li label{
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+.acf-input .acf-radio-list li label {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
 }
-.acf-input .acf-radio-list label b{
-  flex: 0 0 100%;
-  width: 100%;
-  padding-left: 30px;
+.acf-input .acf-radio-list label b {
+	flex: 0 0 100%;
+	width: 100%;
+	padding-left: 30px;
 }
 .acf-field-message label {
-  font-size: 25px;
+	font-size: 25px;
 }
 
-.acf-field-welcometext blockquote{
-  background: rgb(255, 0, 0 , .1);
-  padding: 1rem;
+.acf-field-welcometext blockquote {
+	background: rgb(255, 0, 0, 0.1);
+	padding: 1rem;
 }
 .acf-field-welcometext ol {
-  margin: 2rem;
+	margin: 2rem;
 }
-.acf-field-welcometext b{
-  text-decoration: underline;
+.acf-field-welcometext b {
+	text-decoration: underline;
 }
-.char-counter.warning{
-  background: rgb(255, 0, 0 , .1);
-  border: 1px solid red;
+.char-counter.warning {
+	background: rgb(255, 0, 0, 0.1);
+	border: 1px solid red;
 }
 span.char-counter {
-  display: inline-block;
-  text-align: center;
-  min-width: 50px;
-  padding: 4px 10px;
-  margin-right: 5px;
-  background-color: rgba(0, 0, 0, 0.25);
-  border-radius: 3px;
-  border: 1px solid transparent;
+	display: inline-block;
+	text-align: center;
+	min-width: 50px;
+	padding: 4px 10px;
+	margin-right: 5px;
+	background-color: rgba(0, 0, 0, 0.25);
+	border-radius: 3px;
+	border: 1px solid transparent;
+}
+.flex {
+	display: flex;
+}
+.flex-col {
+	flex-direction: column;
+}
+.gap-10 {
+	gap: 1rem;
+}
+.welcome-panel__wrap h2 {
+	margin-bottom: 1rem;
+}
+.welcome-panel__wrap hr {
+	border-top: 1px solid #3c4043;
+	border-bottom: 1px solid #3c4043;
+}
+.welcome-panel {
+	padding: 1rem;
+}
+.welcome-panel-container {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(410px, 1fr));
+	gap: 1.6rem;
+}
+.welcome-panel .button-hero {
+	text-align: center;
+}
+.columns-2 {
+	columns: 2;
+	gap: 1rem;
+	break-inside: avoid;
 }

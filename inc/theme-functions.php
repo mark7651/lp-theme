@@ -554,6 +554,30 @@ if (!function_exists('lp_breadcrumbs')) {
 				// Custom post type
 				$post_type_obj = get_post_type_object($post_type);
 
+				// if ($post_type === 'doctors') {
+				// 	$doctors_page = get_page_by_path('likari');
+
+				// 	if ($doctors_page) {
+				// 		$position++;
+				// 		$breadcrumbs[] = array(
+				// 			'url' => esc_url(get_permalink($doctors_page->ID)),
+				// 			'title' => esc_html(get_the_title($doctors_page->ID)),
+				// 			'position' => $position
+				// 		);
+				// 	}
+				// } elseif ($post_type === 'services') {
+				// 	$services_page = get_page_by_path('napryamky-roboty-kliniky');
+
+				// 	if ($services_page) {
+				// 		$position++;
+				// 		$breadcrumbs[] = array(
+				// 			'url' => esc_url(get_permalink($services_page->ID)),
+				// 			'title' => esc_html(get_the_title($services_page->ID)),
+				// 			'position' => $position
+				// 		);
+				// 	}
+				// }
+
 				// Add post type archive
 				if ($post_type_obj && $post_type_obj->has_archive) {
 					$position++;
