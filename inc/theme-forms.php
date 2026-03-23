@@ -26,50 +26,6 @@ if (! function_exists('lp_callback_form_shortcode')) {
     add_shortcode('form-callback', 'lp_callback_form_shortcode');
 }
 
-/**
- * ------------------------------------------------------------------------------------------------
- * Custom SMTP mailer
- * ------------------------------------------------------------------------------------------------
- */
-
-function lp_send_smtp_email($phpmailer)
-{
-    if (! function_exists('get_field') || ! get_field('enable_smtp', 'option')) {
-        return;
-    }
-
-    // Retrieve SMTP settings
-    $host     = get_field('smtp_host', 'option');
-    $port     = get_field('smtp_port', 'option');
-    $username = get_field('smtp_username', 'option');
-    $password = get_field('smtp_password', 'option');
-    $secure   = get_field('smtp_secure', 'option') ?: 'ssl'; // Default to 'ssl' if not set
-
-    if (empty($host) || empty($port) || empty($username) || empty($password)) {
-        return;
-    }
-
-    // Configure PHPMailer for SMTP
-    $phpmailer->isSMTP();
-    $phpmailer->CharSet    = 'UTF-8';
-    $phpmailer->Host       = sanitize_text_field($host);
-    $phpmailer->Port       = absint($port);
-    $phpmailer->SMTPSecure = in_array($secure, ['ssl', 'tls'], true) ? $secure : 'ssl';
-    $phpmailer->SMTPAuth   = true;
-    $phpmailer->Username   = sanitize_text_field($username);
-    $phpmailer->Password   = $password;
-    $phpmailer->From       = sanitize_email($username);
-    $phpmailer->FromName   = esc_attr(get_bloginfo('name'));
-
-    // Ensure AltBody is set for plain-text fallback
-    $phpmailer->AltBody = wp_strip_all_tags($phpmailer->Body);
-
-    // Optional: Add Reply-To (uncomment and configure if needed)
-    // $phpmailer->addReplyTo( sanitize_email( 'reply@example.com' ), esc_attr__( 'Information', 'lp-seo' ) );
-}
-
-add_action('phpmailer_init', 'lp_send_smtp_email');
-
 
 /**
  * ------------------------------------------------------------------------------------------------

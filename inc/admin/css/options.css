@@ -122,8 +122,81 @@ span.char-counter {
 .welcome-panel .button-hero {
 	text-align: center;
 }
-.columns-2 {
+.welcome-panel-container .columns-2 {
 	columns: 2;
 	gap: 1rem;
 	break-inside: avoid;
+}
+
+.menu-item-toggle {
+	position: absolute;
+	right: 0px;
+	top: 50%;
+	transform: translate(130%, -50%);
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	outline: none;
+	transition: transform 0.2s ease;
+}
+
+.menu-item-toggle:hover {
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 4px;
+}
+
+.menu-item-toggle:focus {
+	box-shadow: 0 0 0 2px #2271b1;
+	border-radius: 4px;
+}
+
+.menu-item-toggle .toggle-indicator {
+	display: block;
+	width: 20px;
+	height: 20px;
+	position: relative;
+	margin: 0 auto;
+}
+
+.menu-item-toggle .toggle-indicator::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) rotate(45deg);
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid #fff;
+	border-bottom: 2px solid #fff;
+	transition: transform 0.2s ease;
+}
+
+.menu-item-toggle.collapsed .toggle-indicator::before {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.menu-item.hidden-child {
+	display: none !important;
+}
+.menu-item-bar {
+	position: relative;
+	width: fit-content;
+}
+
+.menu-item.hidden-child {
+	animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 1;
+		max-height: 100px;
+	}
+	to {
+		opacity: 0;
+		max-height: 0;
+	}
 }

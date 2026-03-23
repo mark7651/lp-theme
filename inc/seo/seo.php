@@ -8,7 +8,7 @@
 
 require_once LP_FRAMEWORK . '/seo/seo-admin.php';
 require_once LP_FRAMEWORK . '/seo/seo-tags.php';
-require_once LP_THEMEROOT . '/seo/schema-org.php';
+require_once LP_FRAMEWORK . '/seo/schema-org.php';
 
 // jQuery to footer ==========================================================================
 function remove_head_scripts()
@@ -679,13 +679,67 @@ if (function_exists('pll_current_language')) {
  * ------------------------------------------------------------------------------------------------
  */
 
-function remove_category($string, $type)
+
+add_filter('request', 'rudr_change_category_request', 1, 1);
+function rudr_change_category_request($query)
 {
-	if ($type != 'single' && $type == 'category' && (strpos($string, 'category') !== false)) {
-		$url_without_category = str_replace("/category/", "/", $string);
-		return trailingslashit($url_without_category);
+	$tax_name = 'category';
+
+	if (isset($query['attachment']) && $query['attachment']) {
+		$include_children = true;
+		$name = $query['attachment'];
+	} else {
+		$include_children = false;
+		$name = isset($query['name']) ? $query['name'] : '';
 	}
-	return $string;
+
+	$term = get_term_by('slug', $name, $tax_name);
+
+	if (isset($term->slug)) {
+		if ($include_children) {
+			unset($query['attachment']);
+			$parent = $term->parent;
+			while ($parent) {
+				$parent_term = get_term($parent, $tax_name);
+				$name = $parent_term->slug . '/' . $name;
+				$parent = $parent_term->parent;
+			}
+		} else {
+			unset($query['name']);
+		}
+
+		$query['category_name'] = $name;
+	}
+
+	return $query;
 }
 
-add_filter('user_trailingslashit', 'remove_category', 100, 2);
+add_filter('term_link', 'rudr_category_permalink', 10, 3);
+function rudr_category_permalink($url, $term, $taxonomy)
+{
+	$taxonomy_name = 'category';
+	$taxonomy_slug = 'category';
+
+	if (strpos($url, $taxonomy_slug) === false || $taxonomy !== $taxonomy_name) {
+		return $url;
+	}
+
+	$url = str_replace('/' . $taxonomy_slug . '/', '/', $url);
+
+	return $url;
+}
+
+add_action('template_redirect', 'rudr_old_category_redirect');
+function rudr_old_category_redirect()
+{
+	$taxonomy_name = 'category';
+	$taxonomy_slug = 'category';
+	if (strpos($_SERVER['REQUEST_URI'], '/' . $taxonomy_slug . '/') === false) {
+		return;
+	}
+
+	if (is_category()) {
+		wp_redirect(str_replace('/' . $taxonomy_slug . '/', '/', home_url($_SERVER['REQUEST_URI'])), 301);
+		exit;
+	}
+}

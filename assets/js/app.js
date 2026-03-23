@@ -124,7 +124,7 @@ class LoaderComponent {
 				ease: 'power4.inOut',
 				immediateRender: false,
 			},
-			0
+			0,
 		)
 		return tl
 	}
@@ -221,12 +221,13 @@ function initializeGSAPAndLenis() {
 
 	state.lenis = new Lenis({
 		//autoRaf: true,
-		lerp: 0.12,
+		lerp: 0.14,
 		direction: 'vertical',
 		smoothWheel: true,
 		smoothTouch: false,
 		touchMultiplier: 0,
 		anchors: true,
+		anchors: { offset: -120 },
 	})
 	window.lenis = state.lenis
 
@@ -300,7 +301,7 @@ function reller() {
 				let w = (widths[i] = parseFloat(gsap.getProperty(el, 'width', 'px')))
 				xPercents[i] = snap(
 					(parseFloat(gsap.getProperty(el, 'x', 'px')) / w) * 100 +
-						gsap.getProperty(el, 'xPercent')
+						gsap.getProperty(el, 'xPercent'),
 				)
 				return xPercents[i]
 			},
@@ -325,13 +326,13 @@ function reller() {
 					xPercent: snap(((curX - distanceToLoop) / widths[i]) * 100),
 					duration: distanceToLoop / pixelsPerSecond,
 				},
-				0
+				0,
 			)
 				.fromTo(
 					item,
 					{
 						xPercent: snap(
-							((curX - distanceToLoop + totalWidth) / widths[i]) * 100
+							((curX - distanceToLoop + totalWidth) / widths[i]) * 100,
 						),
 					},
 					{
@@ -340,7 +341,7 @@ function reller() {
 							(curX - distanceToLoop + totalWidth - curX) / pixelsPerSecond,
 						immediateRender: false,
 					},
-					distanceToLoop / pixelsPerSecond
+					distanceToLoop / pixelsPerSecond,
 				)
 				.add('label' + i, distanceToStart / pixelsPerSecond)
 			times[i] = distanceToStart / pixelsPerSecond
@@ -409,7 +410,7 @@ function initFadeAnimations() {
 				duration: 0.6,
 				willChange: 'opacity, transform',
 				ease: 'power1.inOut',
-			}
+			},
 		)
 		triggers.push(tl.scrollTrigger)
 	})
@@ -434,7 +435,7 @@ function initHeadingAnimations(selector = '[scrub-text]', config = {}) {
 					//end: 'bottom 60%',
 					//scrub: true,
 				},
-				config
+				config,
 			)
 			this.elements = gsap.utils.toArray(selector)
 			this.splits = []

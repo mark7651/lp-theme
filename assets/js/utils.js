@@ -1,6 +1,6 @@
 const isMob =
 	/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-		navigator.userAgent
+		navigator.userAgent,
 	)
 
 const isTouchDevice = () => {
@@ -62,13 +62,18 @@ function initAsidePanels() {
 			() => {
 				panelFill.style.willChange = 'auto'
 			},
-			{ once: true }
+			{ once: true },
 		)
 		overlay.addEventListener('click', handleOverlayClick)
 		const closeBtn = panel.querySelector('.panel-close')
 		if (closeBtn) {
 			closeBtn.addEventListener('click', handleCloseClick)
 		}
+
+		const anchorLinks = panel.querySelectorAll('a[href*="#"]')
+		anchorLinks.forEach(link => {
+			link.addEventListener('click', handleAnchorClick)
+		})
 	}
 
 	function handlePanelTriggerClick(event) {
@@ -88,6 +93,10 @@ function initAsidePanels() {
 		}
 
 		openPanel(panel, trigger)
+	}
+
+	function handleAnchorClick(e) {
+		closePanel(activePanel, activeTrigger)
 	}
 
 	function closeAllPanels() {
@@ -309,7 +318,7 @@ function lazyVideos() {
 	if ('IntersectionObserver' in window) {
 		const lazyVideoObserver = new IntersectionObserver(function (
 			entries,
-			observer
+			observer,
 		) {
 			entries.forEach(function (video) {
 				if (video.isIntersecting) {
@@ -431,7 +440,7 @@ function accordeon() {
 		}
 
 		const descriptions = container.querySelectorAll(
-			'.accordeon-item__description'
+			'.accordeon-item__description',
 		)
 
 		descriptions.forEach(desc => {
@@ -447,7 +456,7 @@ function accordeon() {
 			const activeItems = container.querySelectorAll('.accordeon-item.active')
 			activeItems.forEach(item => {
 				const descriptionContainer = item.querySelector(
-					'.accordeon-item__description'
+					'.accordeon-item__description',
 				)
 				if (descriptionContainer) {
 					descriptionContainer.style.maxHeight = 'none'
@@ -485,7 +494,7 @@ function accordeon() {
 		function toggleItem(tab) {
 			const siblings = getSiblings(tab)
 			const descriptionContainer = tab.querySelector(
-				'.accordeon-item__description'
+				'.accordeon-item__description',
 			)
 			if (!descriptionContainer) return
 
@@ -523,11 +532,12 @@ function accordeon() {
 		function getSiblings(element) {
 			return [...element.parentNode.children].filter(
 				sibling =>
-					sibling !== element && sibling.classList.contains('accordeon-item')
+					sibling !== element && sibling.classList.contains('accordeon-item'),
 			)
 		}
 	})
 }
+
 function tabs() {
 	const tabContainers = document.querySelectorAll('[data-tabs]')
 	if (!tabContainers.length) return
@@ -535,6 +545,7 @@ function tabs() {
 	tabContainers.forEach(container => {
 		const tabs = container.querySelectorAll('[data-tab-target]')
 		const tabContents = container.querySelectorAll('[data-tab-content]')
+		let previousTabIndex = -1
 
 		container.addEventListener('click', event => {
 			const clickedTab = event.target.closest('[data-tab-target]')
@@ -544,12 +555,35 @@ function tabs() {
 			const targetContent = container.querySelector(targetSelector)
 			if (!targetContent) return
 
+			const clickedIndex = Array.from(tabs).indexOf(clickedTab)
+
+			if (previousTabIndex === 0) {
+				container.dataset.prev = 'first'
+			} else if (previousTabIndex === tabs.length - 1) {
+				container.dataset.prev = 'last'
+			} else if (previousTabIndex !== -1) {
+				container.dataset.prev = 'middle'
+			}
+
 			tabs.forEach(tab => tab.classList.remove('active'))
 			tabContents.forEach(content => content.classList.remove('active'))
 
 			clickedTab.classList.add('active')
 			targetContent.classList.add('active')
+
+			previousTabIndex = clickedIndex
 		})
+
+		const firstTab = tabs[0]
+		if (firstTab && !container.querySelector('[data-tab-target].active')) {
+			firstTab.classList.add('active')
+			const firstTargetSelector = firstTab.dataset.tabTarget
+			const firstContent = container.querySelector(firstTargetSelector)
+			if (firstContent) {
+				firstContent.classList.add('active')
+			}
+			previousTabIndex = 0
+		}
 	})
 }
 
@@ -621,83 +655,71 @@ const dropdown = () => {
 		const selectedNames = selectedValues.map(val =>
 			Array.from(options)
 				.find(opt => opt.getAttribute('data-value') === val)
-				.textContent.trim()
+				.textContent.trim(),
 		)
 		input.value = selectedNames.length > 0 ? selectedNames.join(', ') : ''
 	}
 }
 
 function initSlider(selector, options = {}, customHandlers = {}) {
-	const sliderElement = document.querySelector(selector)
-	if (!sliderElement) {
-		console.warn(`Slider not found: ${selector}`)
-		return
+	const sliderElements = document.querySelectorAll(selector)
+	if (!sliderElements.length) {
+		console.warn(`No sliders found: ${selector}`)
+		return []
 	}
 
-	if (typeof Splide === 'undefined') {
-		console.warn('Splide is not loaded')
-		return
-	}
+	return Array.from(sliderElements)
+		.map(sliderElement => {
+			if (typeof Splide === 'undefined') {
+				console.warn('Splide is not loaded')
+				return
+			}
 
-	try {
-		const splide = new Splide(sliderElement, options)
+			try {
+				const splide = new Splide(sliderElement, options)
 
-		if (options.autoplay) {
-			const observer = new IntersectionObserver(
-				entries => {
-					entries.forEach(entry => {
-						if (entry.isIntersecting) {
-							splide.Components.Autoplay.play()
-						} else {
-							splide.Components.Autoplay.pause()
-						}
-					})
-				},
-				{
-					threshold: 0.5,
-					rootMargin: '0px',
+				if (options.autoplay) {
+					const observer = new IntersectionObserver(
+						entries => {
+							entries.forEach(entry => {
+								if (entry.isIntersecting) {
+									splide.Components.Autoplay.play()
+								} else {
+									splide.Components.Autoplay.pause()
+								}
+							})
+						},
+						{ threshold: 0.5, rootMargin: '0px' },
+					)
+
+					splide.on('mounted', () => observer.observe(sliderElement))
+					splide.on('destroy', () => observer.disconnect())
 				}
-			)
 
-			splide.on('mounted', () => {
-				observer.observe(sliderElement)
-			})
+				if (customHandlers.onMounted) {
+					splide.on('mounted', () =>
+						customHandlers.onMounted(splide, sliderElement),
+					)
+				}
 
-			splide.on('destroy', () => {
-				observer.disconnect()
-			})
-		}
+				if (customHandlers.navigation) {
+					const { prevSelector, nextSelector } = customHandlers.navigation
+					const prevButtons = document.querySelectorAll(prevSelector)
+					const nextButtons = document.querySelectorAll(nextSelector)
 
-		if (customHandlers.onMounted) {
-			splide.on('mounted', () =>
-				customHandlers.onMounted(splide, sliderElement)
-			)
-		}
+					if (prevButtons.length)
+						prevButtons.forEach(btn => (btn.onclick = () => splide.go('<')))
+					if (nextButtons.length)
+						nextButtons.forEach(btn => (btn.onclick = () => splide.go('>')))
+				}
 
-		if (customHandlers.navigation) {
-			const { prevSelector, nextSelector } = customHandlers.navigation
-			const prevButtons = document.querySelectorAll(prevSelector)
-			const nextButtons = document.querySelectorAll(nextSelector)
-
-			if (prevButtons.length) {
-				prevButtons.forEach(btn => (btn.onclick = () => splide.go('<')))
-			} else {
-				console.warn(`Prev button not found: ${prevSelector}`)
+				splide.mount()
+				return splide
+			} catch (error) {
+				console.error(`Error initializing slider (${selector}):`, error)
 			}
-
-			if (nextButtons.length) {
-				nextButtons.forEach(btn => (btn.onclick = () => splide.go('>')))
-			} else {
-				console.warn(`Next button not found: ${nextSelector}`)
-			}
-		}
-
-		splide.mount()
-
-		return splide
-	} catch (error) {
-		console.error(`Error initializing slider (${selector}):`, error)
-	}
+		})
+		.filter(Boolean)
 }
 
 const stickyHeader = () => {

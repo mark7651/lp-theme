@@ -8,6 +8,7 @@
 		"browser-sync": "browser-sync start --proxy 'website.local' --files '**/*.php, **/*.css, **/**/*.css, **/*.js'"
 	},
 	"devDependencies": {
+		"@tailwindcss/typography": "^0.5.19",
 		"browser-sync": "latest",
 		"tailwind-scrollbar": "^4.0.1",
 		"tailwindcss": "^4.1.4"

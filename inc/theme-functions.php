@@ -61,7 +61,24 @@ if (!function_exists('lp_body_class')) {
 			$classes[] = 'is-loading';
 		}
 
-		$classes[] = wp_is_mobile() ? 'is-mobile' : 'is-desktop';
+		$include = array(
+			'is-iphone'            => $GLOBALS['is_iphone'],
+			'is-chrome'            => $GLOBALS['is_chrome'],
+			'is-safari'            => $GLOBALS['is_safari'],
+			'is-ns4'               => $GLOBALS['is_NS4'],
+			'is-opera'             => $GLOBALS['is_opera'],
+			'is-mac-ie'            => $GLOBALS['is_macIE'],
+			'is-win-ie'            => $GLOBALS['is_winIE'],
+			'is-gecko'             => $GLOBALS['is_gecko'],
+			'is-lynx'              => $GLOBALS['is_lynx'],
+			'is-ie'                => $GLOBALS['is_IE'],
+			'is-edge'              => $GLOBALS['is_edge'],
+			'is-mobile'            => wp_is_mobile(),
+			'is-desktop'           => !wp_is_mobile(),
+		);
+		foreach ($include as $class => $do_include) {
+			if ($do_include) $classes[$class] = $class;
+		}
 
 		return $classes;
 	}
@@ -1146,6 +1163,311 @@ if (!function_exists('lp_paging_nav')) {
 <?php
 	}
 }
+
+
+
+/**
+ * ------------------------------------------------------------------------------------------------
+ * Cyrillic to Latin Transliteration
+ * ------------------------------------------------------------------------------------------------
+ */
+
+function lp_cyr_to_lat_table()
+{
+	return apply_filters('lp_cyr_to_lat_table', [
+		// Russian
+		'А' => 'A',
+		'а' => 'a',
+		'Б' => 'B',
+		'б' => 'b',
+		'В' => 'V',
+		'в' => 'v',
+		'Г' => 'G',
+		'г' => 'g',
+		'Д' => 'D',
+		'д' => 'd',
+		'Е' => 'E',
+		'е' => 'e',
+		'Ё' => 'Yo',
+		'ё' => 'yo',
+		'Ж' => 'Zh',
+		'ж' => 'zh',
+		'З' => 'Z',
+		'з' => 'z',
+		'И' => 'I',
+		'и' => 'i',
+		'Й' => 'J',
+		'й' => 'j',
+		'К' => 'K',
+		'к' => 'k',
+		'Л' => 'L',
+		'л' => 'l',
+		'М' => 'M',
+		'м' => 'm',
+		'Н' => 'N',
+		'н' => 'n',
+		'О' => 'O',
+		'о' => 'o',
+		'П' => 'P',
+		'п' => 'p',
+		'Р' => 'R',
+		'р' => 'r',
+		'С' => 'S',
+		'с' => 's',
+		'Т' => 'T',
+		'т' => 't',
+		'У' => 'U',
+		'у' => 'u',
+		'Ф' => 'F',
+		'ф' => 'f',
+		'Х' => 'Kh',
+		'х' => 'kh',
+		'Ц' => 'Ts',
+		'ц' => 'ts',
+		'Ч' => 'Ch',
+		'ч' => 'ch',
+		'Ш' => 'Sh',
+		'ш' => 'sh',
+		'Щ' => 'Shch',
+		'щ' => 'shch',
+		'Ъ' => '',
+		'ъ' => '',
+		'Ы' => 'Y',
+		'ы' => 'y',
+		'Ь' => '',
+		'ь' => '',
+		'Э' => 'E',
+		'э' => 'e',
+		'Ю' => 'Yu',
+		'ю' => 'yu',
+		'Я' => 'Ya',
+		'я' => 'ya',
+
+		// Ukrainian
+		'Є' => 'Ye',
+		'є' => 'ye',
+		'І' => 'I',
+		'і' => 'i',
+		'Ї' => 'Yi',
+		'ї' => 'yi',
+		'Ґ' => 'G',
+		'ґ' => 'g',
+
+		// Belorussian
+		'Ў' => 'U',
+		'ў' => 'u',
+
+		// Bulgarian / Macedonian / Serbian
+		'Љ' => 'Lj',
+		'љ' => 'lj',
+		'Њ' => 'Nj',
+		'њ' => 'nj',
+		'Ћ' => 'C',
+		'ћ' => 'c',
+		'Ђ' => 'Dj',
+		'ђ' => 'dj',
+		'Џ' => 'Dz',
+		'џ' => 'dz',
+		'Ѓ' => 'Gj',
+		'ѓ' => 'gj',
+		'Ќ' => 'Kj',
+		'ќ' => 'kj',
+
+		// Greek
+		'Α' => 'A',
+		'α' => 'a',
+		'Β' => 'V',
+		'β' => 'v',
+		'Γ' => 'G',
+		'γ' => 'g',
+		'Δ' => 'D',
+		'δ' => 'd',
+		'Ε' => 'E',
+		'ε' => 'e',
+		'Ζ' => 'Z',
+		'ζ' => 'z',
+		'Η' => 'I',
+		'η' => 'i',
+		'Θ' => 'Th',
+		'θ' => 'th',
+		'Ι' => 'I',
+		'ι' => 'i',
+		'Κ' => 'K',
+		'κ' => 'k',
+		'Λ' => 'L',
+		'λ' => 'l',
+		'Μ' => 'M',
+		'μ' => 'm',
+		'Ν' => 'N',
+		'ν' => 'n',
+		'Ξ' => 'Ks',
+		'ξ' => 'ks',
+		'Ο' => 'O',
+		'ο' => 'o',
+		'Π' => 'P',
+		'π' => 'p',
+		'Ρ' => 'R',
+		'ρ' => 'r',
+		'Σ' => 'S',
+		'σ' => 's',
+		'Τ' => 'T',
+		'τ' => 't',
+		'Υ' => 'Y',
+		'υ' => 'y',
+		'Φ' => 'F',
+		'φ' => 'f',
+		'Χ' => 'Ch',
+		'χ' => 'ch',
+		'Ψ' => 'Ps',
+		'ψ' => 'ps',
+		'Ω' => 'O',
+		'ω' => 'o',
+
+		// Armenian
+		'Ա' => 'A',
+		'ա' => 'a',
+		'Բ' => 'B',
+		'բ' => 'b',
+		'Գ' => 'G',
+		'գ' => 'g',
+		'Դ' => 'D',
+		'դ' => 'd',
+		'Ե' => 'E',
+		'ե' => 'e',
+		'Զ' => 'Z',
+		'զ' => 'z',
+		'Է' => 'E',
+		'է' => 'e',
+		'Ը' => 'Y',
+		'ը' => 'y',
+		'Թ' => 'T',
+		'թ' => 't',
+		'Ժ' => 'Zh',
+		'ժ' => 'zh',
+		'Ի' => 'I',
+		'ի' => 'i',
+		'Լ' => 'L',
+		'լ' => 'l',
+		'Կ' => 'K',
+		'կ' => 'k',
+		'Հ' => 'H',
+		'հ' => 'h',
+		'Ձ' => 'Dz',
+		'ձ' => 'dz',
+		'Ղ' => 'Gh',
+		'ղ' => 'gh',
+		'Ճ' => 'Ch',
+		'ճ' => 'ch',
+		'Մ' => 'M',
+		'մ' => 'm',
+		'Յ' => 'Y',
+		'յ' => 'y',
+		'Ն' => 'N',
+		'ն' => 'n',
+		'Շ' => 'Sh',
+		'շ' => 'sh',
+		'Ո' => 'O',
+		'ո' => 'o',
+		'Չ' => 'Ch',
+		'չ' => 'ch',
+		'Պ' => 'P',
+		'պ' => 'p',
+		'Ջ' => 'J',
+		'ջ' => 'j',
+		'Ռ' => 'R',
+		'ռ' => 'r',
+		'Ս' => 'S',
+		'ս' => 's',
+		'Վ' => 'V',
+		'վ' => 'v',
+		'Տ' => 'T',
+		'տ' => 't',
+		'Ր' => 'R',
+		'ր' => 'r',
+		'Ց' => 'Ts',
+		'ց' => 'ts',
+		'Փ' => 'P',
+		'փ' => 'p',
+		'Ք' => 'K',
+		'քle' => 'k',
+		'Եւ' => 'Ev',
+		'եւ' => 'ev',
+		'Օ' => 'O',
+		'օ' => 'o',
+		'Ֆ' => 'F',
+		'ֆ' => 'f',
+
+		// Georgian
+		'ა' => 'a',
+		'ბ' => 'b',
+		'გ' => 'g',
+		'დ' => 'd',
+		'ე' => 'e',
+		'ვ' => 'v',
+		'ზ' => 'z',
+		'თ' => 't',
+		'ი' => 'i',
+		'კ' => 'k',
+		'ლ' => 'l',
+		'მ' => 'm',
+		'ნ' => 'n',
+		'ო' => 'o',
+		'პ' => 'p',
+		'ჟ' => 'zh',
+		'რ' => 'r',
+		'ს' => 's',
+		'ტ' => 't',
+		'უ' => 'u',
+		'ფ' => 'f',
+		'ქ' => 'k',
+		'ღ' => 'gh',
+		'ყ' => 'q',
+		'შ' => 'sh',
+		'ჩ' => 'ch',
+		'ც' => 'ts',
+		'ძ' => 'dz',
+		'წ' => 'ts',
+		'ჭ' => 'ch',
+		'ხ' => 'kh',
+		'ჯ' => 'j',
+		'ჰ' => 'h',
+	]);
+}
+
+function lp_cyr_to_lat($string)
+{
+	$table = lp_cyr_to_lat_table();
+	return strtr($string, $table);
+}
+
+function lp_transliterate_slug($slug)
+{
+	$slug = urldecode($slug);
+	$slug = lp_cyr_to_lat($slug);
+	$slug = strtolower($slug);
+	$slug = preg_replace('/[^a-z0-9\-]/', '-', $slug);
+	$slug = preg_replace('/-+/', '-', $slug);
+	$slug = trim($slug, '-');
+	return $slug;
+}
+
+add_filter('wp_insert_post_data', function ($data) {
+	if (!empty($data['post_name'])) {
+		$data['post_name'] = lp_transliterate_slug($data['post_name']);
+	}
+	return $data;
+}, 9);
+
+add_filter('pre_term_slug', function ($slug) {
+	return lp_transliterate_slug($slug);
+}, 9);
+
+add_filter('sanitize_file_name', function ($filename) {
+	$info      = pathinfo($filename);
+	$name      = lp_transliterate_slug($info['filename']);
+	$extension = isset($info['extension']) ? '.' . $info['extension'] : '';
+	return $name . $extension;
+}, 9);
 
 /**
  * ------------------------------------------------------------------------------------------------

@@ -30,5 +30,5 @@
 .modal-close {
 	@apply after:w-16 
 	before:w-16 
-	size-16 overflow-hidden rounded-full bg-white flex items-center justify-center z-[1001] border-0 text-dark-blue transition-all hover:opacity-70 before:content-[''] before:absolute before:h-[2px] before:bg-current before:rounded-[2px] before:rotate-45 before:transition-all before:duration-200 after:content-[''] after:absolute after:h-[2px] after:bg-current after:rounded-[2px] after:-rotate-45 after:transition-all after:duration-300;
+	size-16 overflow-hidden rounded-full bg-white flex items-center justify-center z-[1001] border-0 transition-all hover:opacity-70 before:content-[''] before:absolute before:h-[2px] before:bg-current before:rounded-[2px] before:rotate-45 before:transition-all before:duration-200 after:content-[''] after:absolute after:h-[2px] after:bg-current after:rounded-[2px] after:-rotate-45 after:transition-all after:duration-300;
 }

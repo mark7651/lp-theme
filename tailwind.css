@@ -13,6 +13,7 @@ Tags: seo, custom fields, custom menu walker, fast loading
 
 @import 'tailwindcss';
 
+@plugin "@tailwindcss/typography";
 @plugin "@igorkowalczyk/is-browser";
 @plugin 'tailwind-scrollbar' {
 	nocompatible: true;
@@ -53,6 +54,7 @@ Tags: seo, custom fields, custom menu walker, fast loading
 	--color-red: red;
 	--color-border: #eee;
 
+	--breakpoint-xs: 30rem; /*480px*/
 	--breakpoint-sm: 40rem;
 	--breakpoint-md: 48rem;
 	--breakpoint-lg: 64rem;
