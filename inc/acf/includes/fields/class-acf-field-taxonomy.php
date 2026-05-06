@@ -1,4 +1,13 @@
 <?php
+/**
+ * @package ACF
+ * @author  WP Engine
+ *
+ * © 2026 Advanced Custom Fields (ACF®). All rights reserved.
+ * "ACF" is a trademark of WP Engine.
+ * Licensed under the GNU General Public License v2 or later.
+ * https://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 
@@ -70,7 +79,7 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 				$key   = '';
 			}
 
-			if ( ! acf_verify_ajax( $nonce, $key ) ) {
+			if ( ! acf_verify_ajax( $nonce, $key, ! $conditional_logic ) ) {
 				die();
 			}
 
@@ -470,6 +479,8 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 			// force value to array
 			$field['value'] = acf_get_array( $field['value'] );
 
+			$nonce = wp_create_nonce( 'acf_field_' . $this->name . '_' . $field['key'] );
+
 			// vars
 			$div = array(
 				'class'           => 'acf-taxonomy-field',
@@ -477,7 +488,7 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 				'data-ftype'      => $field['field_type'],
 				'data-taxonomy'   => $field['taxonomy'],
 				'data-allow_null' => $field['allow_null'],
-				'data-nonce'      => wp_create_nonce( $field['key'] ),
+				'data-nonce'      => $nonce,
 			);
 			// get taxonomy
 			$taxonomy = get_taxonomy( $field['taxonomy'] );
@@ -499,11 +510,11 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 			if ( $field['field_type'] == 'select' ) {
 				$field['multiple'] = 0;
 
-				$this->render_field_select( $field );
+				$this->render_field_select( $field, $nonce );
 			} elseif ( $field['field_type'] == 'multi_select' ) {
 				$field['multiple'] = 1;
 
-				$this->render_field_select( $field );
+				$this->render_field_select( $field, $nonce );
 			} elseif ( $field['field_type'] == 'radio' ) {
 				$this->render_field_checkbox( $field );
 			} elseif ( $field['field_type'] == 'checkbox' ) {
@@ -524,12 +535,13 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 		 *
 		 * @param   $field - an array holding all the field's data
 		 */
-		function render_field_select( $field ) {
+		function render_field_select( $field, $nonce ) {
 
 			// Change Field into a select
 			$field['type']    = 'select';
 			$field['ui']      = 1;
 			$field['ajax']    = 1;
+			$field['nonce']   = $nonce;
 			$field['choices'] = array();
 
 			// value
@@ -598,9 +610,18 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 			$args = apply_filters( 'acf/fields/taxonomy/wp_list_categories/name=' . $field['_name'], $args, $field );
 			$args = apply_filters( 'acf/fields/taxonomy/wp_list_categories/key=' . $field['key'], $args, $field );
 
+			// Build UL attributes for accessibility and consistency.
+			$ul = array(
+				'class' => 'acf-checkbox-list acf-bl',
+				'role'  => $field['field_type'] === 'radio' ? 'radiogroup' : 'group',
+			);
+
+			if ( ! empty( $field['id'] ) ) {
+				$ul['aria-labelledby'] = $field['id'] . '-label';
+			}
 			?>
 <div class="categorychecklist-holder">
-	<ul class="acf-checkbox-list acf-bl">
+	<ul <?php echo acf_esc_attrs( $ul ); ?>>
 			<?php wp_list_categories( $args ); ?>
 	</ul>
 </div>
@@ -766,7 +787,7 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 				)
 			);
 
-			if ( ! acf_verify_ajax( $args['nonce'], $args['field_key'] ) ) {
+			if ( ! acf_verify_ajax( $args['nonce'], $args['field_key'], true ) ) {
 				die();
 			}
 
@@ -946,6 +967,99 @@ if ( ! class_exists( 'acf_field_taxonomy' ) ) :
 			}
 
 			return $links;
+		}
+
+		/**
+		 * Returns an array of JSON-LD Property output types that are supported by this field type.
+		 *
+		 * @since 6.8
+		 *
+		 * @return string[]
+		 */
+		public function get_jsonld_output_types(): array {
+			return array( 'DefinedTerm', 'Text' );
+		}
+
+		/**
+		 * Formats the field value for JSON-LD output.
+		 *
+		 * @since 6.8.0
+		 *
+		 * @param mixed          $value   The value of the field.
+		 * @param integer|string $post_id The ID of the post.
+		 * @param array          $field   The field array.
+		 * @return mixed
+		 */
+		public function format_value_for_jsonld( $value, $post_id, $field ) {
+			if ( empty( $value ) ) {
+				return null;
+			}
+
+			// Get output format with fallback.
+			$output_format = $field['schema_output_format'] ?? '';
+			if ( empty( $output_format ) ) {
+				$property      = $field['schema_property'] ?? '';
+				$output_format = \ACF\AI\GEO\Schema::get_default_output_format( $this->name, $property );
+			}
+
+			// Default to Text if no format determined.
+			if ( empty( $output_format ) ) {
+				$output_format = 'Text';
+			}
+
+			// Force value to array for consistent processing.
+			$value = acf_get_array( $value );
+
+			// Get term objects.
+			$terms = $this->get_terms( $value, $field['taxonomy'] );
+
+			if ( empty( $terms ) ) {
+				return null;
+			}
+
+			// Format based on output format.
+			$formatted = array();
+			foreach ( $terms as $term ) {
+				if ( ! $term instanceof \WP_Term ) {
+					continue;
+				}
+
+				if ( 'Text' === $output_format ) {
+					$formatted[] = $term->name;
+				} else {
+					// DefinedTerm format.
+					$term_data = array(
+						'@type' => 'DefinedTerm',
+						'name'  => $term->name,
+					);
+
+					// Add term URL if available.
+					$term_link = get_term_link( $term );
+					if ( ! is_wp_error( $term_link ) ) {
+						$term_data['url'] = $term_link;
+					}
+
+					// Add term ID as identifier.
+					$term_data['identifier'] = (string) $term->term_id;
+
+					$formatted[] = $term_data;
+				}
+			}
+
+			if ( empty( $formatted ) ) {
+				return null;
+			}
+
+			// Return single value for single-value field types.
+			// Radio is always single. Select is single unless multiple is enabled.
+			$is_single = 'radio' === $field['field_type'] ||
+				( 'select' === $field['field_type'] && empty( $field['multiple'] ) );
+
+			if ( $is_single ) {
+				return $formatted[0];
+			}
+
+			return $formatted;
 		}
 	}
 

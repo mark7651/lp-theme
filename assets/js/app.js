@@ -4,6 +4,7 @@ import {
 	debounce,
 	hideOpenedPanels,
 	initAsidePanels,
+	isSafari,
 	lazyVideos,
 	processLazyImages,
 	setPagePositionTop,
@@ -195,7 +196,7 @@ function reinitForBarba() {
 	lazyVideos()
 	initAnimationRefresh()
 
-	new LPForm('form-contact')
+	document.querySelectorAll('.lp-form').forEach(form => new LPForm(form))
 	window.addEventListener('load', processLazyImages)
 	crollToAnchor()
 }
@@ -219,27 +220,29 @@ function initializeGSAPAndLenis() {
 	})
 	ScrollTrigger.config({ ignoreMobileResize: true })
 
-	state.lenis = new Lenis({
-		//autoRaf: true,
-		lerp: 0.14,
-		direction: 'vertical',
-		smoothWheel: true,
-		smoothTouch: false,
-		touchMultiplier: 0,
-		anchors: true,
-		anchors: { offset: -120 },
-	})
-	window.lenis = state.lenis
+	if (!isSafari) {
+		state.lenis = new Lenis({
+			//autoRaf: true,
+			lerp: 0.14,
+			direction: 'vertical',
+			smoothWheel: true,
+			smoothTouch: false,
+			touchMultiplier: 0,
+			anchors: { offset: -120 },
+		})
+		window.lenis = state.lenis
 
-	state.lenis.on('scroll', ScrollTrigger.update)
-	gsap.ticker.add(time => state.lenis.raf(time * 1000))
+		state.lenis.on('scroll', ScrollTrigger.update)
+		gsap.ticker.add(time => state.lenis.raf(time * 1000))
+		state.lenis.resize()
+	}
+
 	gsap.ticker.lagSmoothing(0)
 	state.loader = new LoaderComponent()
 
 	initAnimations()
 	reinitForBarba()
 	ScrollTrigger.refresh()
-	state.lenis.resize()
 }
 
 function initAnimations() {

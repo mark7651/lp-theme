@@ -10,11 +10,11 @@
 	"devDependencies": {
 		"@tailwindcss/typography": "^0.5.19",
 		"browser-sync": "latest",
-		"tailwind-scrollbar": "^4.0.1",
-		"tailwindcss": "^4.1.4"
+		"tailwind-scrollbar": "^4.0.2",
+		"tailwindcss": "^4.2.2"
 	},
 	"dependencies": {
 		"@igorkowalczyk/is-browser": "^5.1.0",
-		"@tailwindcss/cli": "^4.1.4"
+		"@tailwindcss/cli": "^4.2.2"
 	}
 }

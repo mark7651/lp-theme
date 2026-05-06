@@ -5,8 +5,9 @@ class LPForm {
 		return this.#originalToken.split('').reverse().join('')
 	}
 
-	constructor(formID) {
-		this.form = document.getElementById(formID)
+	constructor(form) {
+		this.form =
+			form instanceof HTMLElement ? form : document.getElementById(form)
 		if (!this.form) return
 
 		this.submitButton = this.form.querySelector('[type="submit"]')
@@ -40,7 +41,7 @@ class LPForm {
 	initialize() {
 		this.form.addEventListener('submit', this.handleSubmit.bind(this))
 		this.notificationBox.addEventListener('click', () =>
-			this.hideNotification()
+			this.hideNotification(),
 		)
 		this.setupFieldListeners()
 	}
@@ -280,8 +281,8 @@ class InputMask {
 			return /[_\d]/.test(a) && i < val.length
 				? val.charAt(i++)
 				: i >= val.length
-				? ''
-				: a
+					? ''
+					: a
 		})
 
 		const prefixLength = matrix.indexOf('_')
@@ -316,7 +317,7 @@ class InputMask {
 		this.el.addEventListener(
 			'click',
 			this.preventCursorBeforePrefix.bind(this),
-			false
+			false,
 		)
 	}
 

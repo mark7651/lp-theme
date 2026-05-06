@@ -2,7 +2,7 @@
 	@apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-thumb-primary scrollbar-track-transparent;
 }
 html {
-	@apply antialiased select-none font-main text-[14px] md:text-[16px] xl:text-[var(--root-size)];
+	@apply antialiased select-none font-main text-[14px] md:text-[16px] xl:text-(--root-size);
 	font-kerning: none;
 	font-variant-ligatures: none;
 }
@@ -16,11 +16,6 @@ body {
 }
 .lenis.lenis-smooth {
 	@apply h-screen scroll-auto;
-}
-
-.lenis.lenis-stopped,
-.lenis.lenis-stopped body {
-	@apply overflow-hidden;
 }
 
 .lenis.lenis-scrolling iframe {
@@ -82,7 +77,7 @@ section {
 	@apply relative;
 }
 .container {
-	@apply relative mx-auto px-10 md:px-20 2xl:px-40;
+	@apply relative mx-auto px-16 md:px-20 2xl:px-40;
 }
 .section {
 	@apply relative;

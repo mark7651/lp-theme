@@ -1,4 +1,4 @@
-<aside id="contactPanel" class="aside-panel contact-panel fixed top-0 right-0 bottom-0 size-full max-w-700 translate-x-[120%] transition-all duration-500 ease">
+<aside id="contactPanel" class="aside-panel contact-panel fixed top-0 right-0 bottom-0 size-full max-w-700 translate-x-[110%] transition-all duration-500 ease hidden md:block">
 	<button class="panel-close" aria-label="Close panel"></button>
 	<noindex>
 		<div class="h-full panel-scroll custom-scroll" data-lenis-prevent>
@@ -17,7 +17,7 @@
 	</noindex>
 </aside>
 
-<aside id="mobilePanel" class="aside-panel fixed top-0 right-0 bottom-0 size-full max-w-700 translate-x-[120%] transition-all duration-500 ease">
+<aside id="mobilePanel" class="aside-panel fixed top-0 right-0 bottom-0 size-full max-w-700 translate-x-[110%] transition-all duration-500 ease hidden md:block">
 	<button class="panel-close" aria-label="Close panel"></button>
 
 	<noindex>

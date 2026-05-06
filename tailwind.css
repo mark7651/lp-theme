@@ -28,12 +28,14 @@ Tags: seo, custom fields, custom menu walker, fast loading
 @import './assets/css/ui/buttons.css' layer(base);
 @import './assets/css/ui/inputs.css' layer(base);
 @import './assets/css/ui/panels.css' layer(base);
+@import './assets/css/ui/drawer.css' layer(base);
 /* @import './assets/css/ui/modals.css' layer(base); */
 /* @import './assets/css/ui/tabs.css' layer(base); */
 /* @import './assets/css/ui/accordeon.css' layer(base); */
 /* @import './assets/css/ui/splide.css' layer(base); */
 
 @import './assets/css/components.css' layer(components);
+/* @import './assets/css/ui/aos.css' layer(components); */
 @import './assets/css/utilities.css' layer(utilities);
 
 @theme {

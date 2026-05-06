@@ -38,7 +38,6 @@ function email_template($content)
     $logo_rastr = get_field('header_logo', 'option') ?: [];
     $logo = esc_url($logo_rastr['url'] ?? get_template_directory_uri() . '/assets/default-logo.png');
     $site_name = get_bloginfo('name');
-    $site_url = home_url();
 
     $output = '
      <!DOCTYPE html>
@@ -244,7 +243,7 @@ class LP_Forms
         $attachments = [];
         $upload_overrides = ['test_form' => false];
 
-        foreach ($_FILES['attachment']['name'] as $key => $value) {
+        foreach (array_keys($_FILES['attachment']['name']) as $key) {
             if (!$_FILES['attachment']['name'][$key]) continue;
 
             $file = [
@@ -299,7 +298,7 @@ class LP_Forms
             $headers[] = 'From: ' . $fields['name'] . ' <' . $fields['email'] . '>';
             $headers[] = 'Reply-To: ' . $fields['email'];
         } else {
-            $headers[] = 'From: ' . $fields['name'] . ' <no-reply@yourdomain.com>';
+            $headers[] = 'From: ' . $fields['name'] . ' <no-reply@' . wp_parse_url(home_url(), PHP_URL_HOST) . '>';
         }
         $attachments = self::process_attachments();
         $recipients = email_recipients();
@@ -315,7 +314,7 @@ class LP_Forms
         // Clean up attachments
         foreach ($attachments as $file) {
             if (file_exists($file)) {
-                @unlink($file);
+                wp_delete_file($file);
             }
         }
 

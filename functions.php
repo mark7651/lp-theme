@@ -28,7 +28,7 @@ define('LP_ICONS', LP_THEME_DIR . '/assets/icons');
 include_once(LP_ACF_PATH . 'acf.php');
 if (! function_exists('lp_acf_settings_url')) {
 	add_filter('acf/settings/url', 'lp_acf_settings_url');
-	function lp_acf_settings_url($url)
+	function lp_acf_settings_url()
 	{
 		return LP_ACF_URL;
 	}
@@ -101,20 +101,24 @@ if (! function_exists('lp_head_functions')) {
 		if (get_field('fonts_preload', 'option')) {
 			lp_fonts_preload();
 		}
+	}
+	add_action('wp_head', 'lp_head_functions', 3);
+}
 
+if (! function_exists('lp_enqueue_styles')) {
+	function lp_enqueue_styles()
+	{
 		$stylesheet_url = get_field('enable_min_css', 'option')
 			? LP_THEME_DIR . '/style.min.css'
 			: get_stylesheet_uri();
 
-		$version = lp_version();
-		if ($version) {
-			$stylesheet_url .= $version;
-		}
-?>
-		<link rel="stylesheet" href="<?php echo esc_url($stylesheet_url); ?>">
-<?php
+		$version = get_field('enable_cache', 'option')
+			? (defined('WP_DEBUG') && WP_DEBUG ? (string) mt_rand() : wp_get_theme()->get('Version'))
+			: false;
+
+		wp_enqueue_style('lptheme-style', $stylesheet_url, array(), $version);
 	}
-	add_action('wp_head', 'lp_head_functions', 3);
+	add_action('wp_enqueue_scripts', 'lp_enqueue_styles');
 }
 
 /**
@@ -160,6 +164,10 @@ if (! function_exists('lp_enqueue_scripts')) {
 				'condition' => get_field('gsap_enable', 'option'),
 				'src'       => LP_SCRIPTS . '/gsap.js'
 			],
+			// 'aos-js' => [
+			// 	'condition' => true,
+			// 	'src'       => LP_SCRIPTS . '/aos.js'
+			// ],
 		];
 
 		foreach ($scripts as $handle => $data) {
@@ -167,20 +175,19 @@ if (! function_exists('lp_enqueue_scripts')) {
 				wp_enqueue_script($handle, $data['src'], array(), null, true);
 			}
 		}
+
+		// Pass AJAX URL and nonce to JS via a registered inline script.
+		wp_register_script('lp-ajax-data', false, array(), null, true);
+		wp_enqueue_script('lp-ajax-data');
+		wp_add_inline_script(
+			'lp-ajax-data',
+			'window.wp_ajax = ' . wp_json_encode(array(
+				'ajax_url' => admin_url('admin-ajax.php'),
+				'nonce'    => wp_create_nonce('lp-nonce'),
+			)) . ';'
+		);
 	}
 }
-
-add_action('wp_print_footer_scripts', function () {
-	$admin_url = esc_url(admin_url('admin-ajax.php'));
-	$nonce = wp_create_nonce('lp-nonce');
-
-	echo '<script type="module">
-			 window.wp_ajax = {
-					ajax_url: "' . $admin_url . '",
-					nonce: "' . $nonce . '"
-			};
-</script>';
-});
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -193,7 +200,6 @@ if (! function_exists('lp_defer_scripts')) {
 	function lp_defer_scripts($tag, $handle, $src)
 	{
 		$defer = array(
-			'app-script',
 			'fslightbox-js',
 			'slider-js',
 			'smooth-scrollbar-js',

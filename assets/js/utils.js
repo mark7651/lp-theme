@@ -3,6 +3,10 @@ const isMob =
 		navigator.userAgent,
 	)
 
+const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(
+	navigator.userAgent,
+)
+
 const isTouchDevice = () => {
 	return (
 		'ontouchstart' in window ||
@@ -11,24 +15,128 @@ const isTouchDevice = () => {
 	)
 }
 
+const SCROLL_KEYS = [
+	'ArrowUp',
+	'ArrowDown',
+	'PageUp',
+	'PageDown',
+	'Home',
+	'End',
+	' ',
+]
+function blockKeyScroll(e) {
+	if (SCROLL_KEYS.includes(e.key)) e.preventDefault()
+}
+
 function initAsidePanels() {
 	const panelFill = document.querySelector('.panel-fill')
 	const overlay = document.querySelector('.overlay')
 	let activePanel = null
 	let activeTrigger = null
 
+	const isDrawer = panel => panel?.classList.contains('aside-drawer')
+
+	function setupDrawer(drawer) {
+		const scroller = drawer.querySelector('.drawer__scroller')
+		const slide = drawer.querySelector('.drawer__slide')
+		if (!scroller || !slide) return
+
+		// Capture the trigger that opened *this* drawer — finishClose may run
+		// later when activeTrigger has already been reassigned to another panel.
+		const myTrigger = activeTrigger
+
+		// Position scroll so the slide is in viewport (snap to "open" anchor)
+		scroller.scrollTop = slide.offsetHeight
+
+		let scrollTimer
+		let rafId
+
+		// Live progress: 0 fully open ... 1 fully closed.
+		// Drives the overlay opacity via CSS, so the backdrop dims with the drag.
+		// Gated on activePanel so a closing drawer can't stomp the variable
+		// while another drawer is opening.
+		const updateProgress = () => {
+			if (activePanel !== drawer) return
+			const slideHeight = slide.offsetHeight
+			if (slideHeight === 0) return
+			const closed = Math.max(
+				0,
+				Math.min(1, 1 - scroller.scrollTop / slideHeight),
+			)
+			document.documentElement.style.setProperty('--drawer-closed', closed)
+		}
+
+		// Triggers close once the scroller has settled at the top
+		const checkClose = () => {
+			if (!drawer.classList.contains('panel-show')) return
+			if (scroller.scrollTop === 0) {
+				finishClose(drawer, myTrigger)
+			}
+		}
+
+		const onScroll = () => {
+			if (rafId) cancelAnimationFrame(rafId)
+			rafId = requestAnimationFrame(updateProgress)
+			clearTimeout(scrollTimer)
+			scrollTimer = setTimeout(checkClose, 80)
+		}
+
+		updateProgress()
+		scroller.addEventListener('scroll', onScroll, { passive: true })
+
+		drawer._lpScrollHandler = onScroll
+		drawer._lpCleanup = () => {
+			clearTimeout(scrollTimer)
+			if (rafId) cancelAnimationFrame(rafId)
+		}
+	}
+
+	function teardownDrawer(drawer) {
+		const scroller = drawer.querySelector('.drawer__scroller')
+		if (scroller && drawer._lpScrollHandler) {
+			scroller.removeEventListener('scroll', drawer._lpScrollHandler)
+			drawer._lpCleanup?.()
+			delete drawer._lpScrollHandler
+			delete drawer._lpCleanup
+		}
+		document.documentElement.style.removeProperty('--drawer-closed')
+	}
+
+	function finishClose(panel, trigger) {
+		panel.classList.remove('panel-show')
+		trigger?.classList.remove('active')
+
+		if (isDrawer(panel)) teardownDrawer(panel)
+
+		// Only tear down shared state if this panel is *still* the active one.
+		// During drawer→drawer switch, the old drawer's checkClose fires after
+		// the new drawer is already open — we must not unhook its listeners.
+		if (activePanel === panel) {
+			document.body.classList.remove('panel-showed')
+			activePanel = null
+			activeTrigger = null
+
+			window.removeEventListener('keydown', blockKeyScroll)
+			compensateScrollbar.unlock()
+			overlay.removeEventListener('click', handleOverlayClick)
+		}
+	}
+
 	function closePanel(panel, trigger) {
 		if (!panel) return
 
-		panel.classList.remove('panel-show')
-		document.body.classList.remove('panel-showed')
-		trigger?.classList.remove('active')
+		if (isDrawer(panel)) {
+			const scroller = panel.querySelector('.drawer__scroller')
+			if (scroller && scroller.scrollTop > 5) {
+				// Smooth-scroll the slide off-screen. The scroll handler in
+				// setupDrawer dims the overlay live and calls finishClose once
+				// the scroller settles at 0.
+				scroller.scrollTo({ top: 0, behavior: 'smooth' })
+				return
+			}
+		}
 
-		activePanel = null
-		activeTrigger = null
-
-		compensateScrollbar.unlock()
-		overlay.removeEventListener('click', handleOverlayClick)
+		finishClose(panel, trigger)
 	}
 
 	function handleOverlayClick() {
@@ -49,13 +157,21 @@ function initAsidePanels() {
 			closePanel(activePanel, activeTrigger)
 		}
 
+		// Reset progress var so a stale value from the previous drawer can't
+		// hold the overlay at opacity 0 while the new drawer is opening.
+		document.documentElement.style.removeProperty('--drawer-closed')
+
 		compensateScrollbar.lock()
+		window.addEventListener('keydown', blockKeyScroll)
 
 		activePanel = panel
 		activeTrigger = trigger
 		document.body.classList.add('panel-showed')
 		trigger.classList.add('active')
 		panel.classList.add('panel-show')
+
+		if (isDrawer(panel)) setupDrawer(panel)
+
 		panelFill.style.willChange = 'transform'
 		panel.addEventListener(
 			'transitionend',
@@ -65,10 +181,10 @@ function initAsidePanels() {
 			{ once: true },
 		)
 		overlay.addEventListener('click', handleOverlayClick)
-		const closeBtn = panel.querySelector('.panel-close')
-		if (closeBtn) {
-			closeBtn.addEventListener('click', handleCloseClick)
-		}
+		const closeBtns = panel.querySelectorAll(
+			'.panel-close, .drawer__drag, .drawer__close, .drawer__curtain',
+		)
+		closeBtns.forEach(btn => btn.addEventListener('click', handleCloseClick))
 
 		const anchorLinks = panel.querySelectorAll('a[href*="#"]')
 		anchorLinks.forEach(link => {
@@ -86,7 +202,10 @@ function initAsidePanels() {
 			return
 		}
 
-		const panel = document.querySelector('#' + panelId)
+		const matches = document.querySelectorAll('#' + panelId)
+		const panel =
+			Array.from(matches).find(el => getComputedStyle(el).display !== 'none') ||
+			matches[0]
 		if (!panel) {
 			console.warn(`Panel with id "${panelId}" not found`)
 			return
@@ -472,7 +591,7 @@ function accordeon() {
 		}, 10)
 
 		function accordionClickHandler(event) {
-			const header = event.target.closest('.accordeon-item__header')
+			const header = event.target.closest('.accordeon-item')
 			if (!header) return
 
 			const link = event.target.closest('a')
@@ -543,46 +662,49 @@ function tabs() {
 	if (!tabContainers.length) return
 
 	tabContainers.forEach(container => {
+		const tabsList = container.querySelector('.tabs')
 		const tabs = container.querySelectorAll('[data-tab-target]')
 		const tabContents = container.querySelectorAll('[data-tab-content]')
-		let previousTabIndex = -1
+
+		const indicator = document.createElement('span')
+		indicator.className = 'tabs-indicator'
+		if (tabsList) tabsList.appendChild(indicator)
+
+		function moveIndicator(tab) {
+			if (!tabsList) return
+			const tabsRect = tabsList.getBoundingClientRect()
+			const tabRect = tab.getBoundingClientRect()
+			indicator.style.left =
+				tabRect.left - tabsRect.left + tabsList.scrollLeft + 'px'
+			indicator.style.width = tabRect.width + 'px'
+		}
+
+		function activateTab(tab) {
+			const targetSelector = tab.dataset.tabTarget
+			const targetContent = container.querySelector(targetSelector)
+			if (!targetContent) return
+
+			tabs.forEach(t => t.classList.remove('active'))
+			tabContents.forEach(c => c.classList.remove('active'))
+
+			tab.classList.add('active')
+			targetContent.classList.add('active')
+			moveIndicator(tab)
+		}
 
 		container.addEventListener('click', event => {
 			const clickedTab = event.target.closest('[data-tab-target]')
 			if (!clickedTab || !container.contains(clickedTab)) return
-
-			const targetSelector = clickedTab.dataset.tabTarget
-			const targetContent = container.querySelector(targetSelector)
-			if (!targetContent) return
-
-			const clickedIndex = Array.from(tabs).indexOf(clickedTab)
-
-			if (previousTabIndex === 0) {
-				container.dataset.prev = 'first'
-			} else if (previousTabIndex === tabs.length - 1) {
-				container.dataset.prev = 'last'
-			} else if (previousTabIndex !== -1) {
-				container.dataset.prev = 'middle'
-			}
-
-			tabs.forEach(tab => tab.classList.remove('active'))
-			tabContents.forEach(content => content.classList.remove('active'))
-
-			clickedTab.classList.add('active')
-			targetContent.classList.add('active')
-
-			previousTabIndex = clickedIndex
+			activateTab(clickedTab)
 		})
 
-		const firstTab = tabs[0]
-		if (firstTab && !container.querySelector('[data-tab-target].active')) {
-			firstTab.classList.add('active')
-			const firstTargetSelector = firstTab.dataset.tabTarget
-			const firstContent = container.querySelector(firstTargetSelector)
-			if (firstContent) {
-				firstContent.classList.add('active')
-			}
-			previousTabIndex = 0
+		const initialTab =
+			container.querySelector('[data-tab-target].active') || tabs[0]
+		if (initialTab) {
+			initialTab.classList.add('active')
+			const initContent = container.querySelector(initialTab.dataset.tabTarget)
+			if (initContent) initContent.classList.add('active')
+			requestAnimationFrame(() => moveIndicator(initialTab))
 		}
 	})
 }
@@ -634,30 +756,46 @@ const dropdown = () => {
 		const dropdownValue = dropdown.querySelector('.dropdown-value')
 		const input = dropdown.querySelector('.dropdown-input input')
 		const options = dropdown.querySelectorAll('.dropdown-panel li')
-
-		let selectedValues = dropdownValue.value
-			? dropdownValue.value.split(',')
-			: []
+		const isMulti = dropdown.hasAttribute('data-multi')
 		const value = option.getAttribute('data-value')
 
-		if (selectedValues.includes(value)) {
-			selectedValues = selectedValues.filter(v => v !== value)
-			option.classList.remove('selected-option')
-			option.removeAttribute('aria-selected')
-		} else {
-			selectedValues.push(value)
-			option.classList.add('selected-option')
-			option.setAttribute('aria-selected', 'true')
+		if (isMulti) {
+			let selectedValues = dropdownValue.value
+				? dropdownValue.value.split(',')
+				: []
+
+			if (selectedValues.includes(value)) {
+				selectedValues = selectedValues.filter(v => v !== value)
+				option.classList.remove('selected-option')
+				option.removeAttribute('aria-selected')
+			} else {
+				selectedValues.push(value)
+				option.classList.add('selected-option')
+				option.setAttribute('aria-selected', 'true')
+			}
+
+			dropdownValue.value = selectedValues.join(',')
+
+			const selectedNames = selectedValues.map(val =>
+				Array.from(options)
+					.find(opt => opt.getAttribute('data-value') === val)
+					.textContent.trim(),
+			)
+			input.value = selectedNames.length > 0 ? selectedNames.join(', ') : ''
+			return
 		}
 
-		dropdownValue.value = selectedValues.join(',')
+		options.forEach(opt => {
+			opt.classList.remove('selected-option')
+			opt.removeAttribute('aria-selected')
+		})
+		option.classList.add('selected-option')
+		option.setAttribute('aria-selected', 'true')
 
-		const selectedNames = selectedValues.map(val =>
-			Array.from(options)
-				.find(opt => opt.getAttribute('data-value') === val)
-				.textContent.trim(),
-		)
-		input.value = selectedNames.length > 0 ? selectedNames.join(', ') : ''
+		dropdownValue.value = value
+		input.value = option.textContent.trim()
+
+		closeDropdown(dropdown)
 	}
 }
 
@@ -745,6 +883,7 @@ export {
 	initModals,
 	initSlider,
 	isMob,
+	isSafari,
 	isTouchDevice,
 	lazyVideos,
 	processLazyImages,

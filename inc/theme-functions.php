@@ -6,7 +6,7 @@
  * ------------------------------------------------------------------------------------------------
  */
 
-function my_main_query_filter($query)
+function lp_main_query_filter($query)
 {
 
 	if (is_admin()) {
@@ -40,7 +40,7 @@ function my_main_query_filter($query)
 	$query->set('update_post_meta_cache', false);
 	$query->set('update_post_term_cache', false);
 }
-add_action('pre_get_posts', 'my_main_query_filter');
+add_action('pre_get_posts', 'lp_main_query_filter');
 
 
 /**
@@ -87,7 +87,7 @@ if (!function_exists('lp_body_class')) {
 
 
 // menu description field
-function lp_nav_description($item_output, $item, $depth, $args)
+function lp_nav_description($item_output, $item)
 {
 	if (!empty($item->description)) {
 		$item_output .= '<span class="menu-item-description">' . esc_html($item->description) . '</span>';
@@ -830,30 +830,28 @@ if (!function_exists('lp_page_title')) {
 
 		// Singular
 		elseif (is_singular()) :
-			$title = get_the_title();
+			$title = esc_html(get_the_title());
 
 		// Search
 		elseif (is_search()) :
 			global $wp_query;
 			$total_results = $wp_query->found_posts;
-			$prefix = '';
 
 			if ($total_results == 1) {
 				$prefix = esc_html__('1 search result for', 'lptheme');
-			} else if ($total_results > 1) {
-				$prefix = $total_results . ' ' . esc_html__('search results for', '');
+			} elseif ($total_results > 1) {
+				$prefix = $total_results . ' ' . esc_html__('search results for', 'lptheme');
 			} else {
 				$prefix = esc_html__('Search results for', 'lptheme');
 			}
-			//$title = $prefix . ': ' . get_search_query();
-			$title = get_search_query();
+			$title = $prefix . ': ' . esc_html(get_search_query());
 
 		// Category and other Taxonomies
 		elseif (is_category()) :
-			$title = single_cat_title('', false);
+			$title = esc_html(single_cat_title('', false));
 
 		elseif (is_tag()) :
-			$title = single_tag_title('', false);
+			$title = esc_html(single_tag_title('', false));
 
 		elseif (is_author()) :
 			$title = wp_kses_post(sprintf(__('Author: %s', 'lptheme'), '<span class="vcard">' . get_the_author() . '</span>'));
@@ -869,7 +867,7 @@ if (!function_exists('lp_page_title')) {
 
 		elseif (is_tax()) :
 			$term = get_term_by('slug', get_query_var('term'), get_query_var('taxonomy'));
-			$title = $term->name;
+			$title = $term ? esc_html($term->name) : '';
 
 		elseif (is_tax('post_format', 'post-format-aside')) :
 			$title = esc_html__('Asides', 'lptheme');
@@ -902,14 +900,14 @@ if (!function_exists('lp_page_title')) {
 			$title = esc_html__('404', 'lptheme');
 
 		elseif (is_archive()) :
-			$title = post_type_archive_title('', false);
+			$title = esc_html(post_type_archive_title('', false));
 
 		else :
 			$title = esc_html__('Archives', 'lptheme');
 		endif; ?>
 
 		<div class="page-title">
-			<h1><?php echo $title; ?></h1>
+			<h1><?php echo wp_kses_post($title); ?></h1>
 			<?php if ($breadcrumbs) lp_breadcrumbs(); ?>
 		</div>
 	<?php return;
@@ -1163,7 +1161,6 @@ if (!function_exists('lp_paging_nav')) {
 <?php
 	}
 }
-
 
 
 /**
@@ -1452,6 +1449,12 @@ function lp_transliterate_slug($slug)
 }
 
 add_filter('wp_insert_post_data', function ($data) {
+	// ACF stores field/group keys in post_name (e.g. field_xxx, group_xxx).
+	// lp_transliterate_slug() converts underscores to hyphens, which breaks
+	// acf_is_field_key() and silently prevents all field values from saving.
+	if (in_array($data['post_type'] ?? '', ['acf-field', 'acf-field-group'], true)) {
+		return $data;
+	}
 	if (!empty($data['post_name'])) {
 		$data['post_name'] = lp_transliterate_slug($data['post_name']);
 	}
@@ -1497,27 +1500,37 @@ function icon($name, $selector = null)
 	echo $svg;
 }
 
+
 /**
  * ------------------------------------------------------------------------------------------------
- * simple translation
+ * Polylang string registration for theme template strings
  * ------------------------------------------------------------------------------------------------
  */
 
-function translate_pll($uk_text, $en_text = null)
-{
-	if (!function_exists('pll_current_language')) {
-		return $uk_text;
+if (!function_exists('lp_register_polylang_strings')) {
+	function lp_register_polylang_strings()
+	{
+		if (!function_exists('pll_register_string')) return;
+
+		$strings = [
+			'footer_nav_label'     => 'Navigation',
+			'footer_contact_label' => 'Contact',
+			'footer_cta_label'     => 'Submit a request',
+		];
+
+		foreach ($strings as $name => $value) {
+			pll_register_string($name, $value, 'lptheme', strlen($value) > 80);
+		}
 	}
-
-	$current_language = pll_current_language();
-
-	if ($en_text === null) {
-		$en_text = $uk_text;
-	}
-
-	return $current_language === 'en' ? $en_text : $uk_text;
+	add_action('init', 'lp_register_polylang_strings');
 }
 
+if (!function_exists('lp_t')) {
+	function lp_t($string)
+	{
+		return function_exists('pll__') ? pll__($string) : $string;
+	}
+}
 /**
  * ------------------------------------------------------------------------------------------------
  *  Cache expensive template parts

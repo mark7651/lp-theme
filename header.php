@@ -25,7 +25,7 @@
 			position: absolute;
 			inset: 0;
 			opacity: 0;
-			background: rgba(255, 255, 0255, 0.5);
+			background: rgba(255, 255, 255, 0.5);
 		}
 
 		.loader-fill {

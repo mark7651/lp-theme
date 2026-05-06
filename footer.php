@@ -12,6 +12,7 @@
 
 <?php get_template_part('template-parts/global/footer') ?>
 <?php get_template_part('template-parts/global/panels') ?>
+<?php get_template_part('template-parts/global/drawer') ?>
 <?php wp_footer(); ?>
 
 </body>

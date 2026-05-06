@@ -9,6 +9,7 @@
 require_once LP_FRAMEWORK . '/seo/seo-admin.php';
 require_once LP_FRAMEWORK . '/seo/seo-tags.php';
 require_once LP_FRAMEWORK . '/seo/schema-org.php';
+require_once LP_FRAMEWORK . '/seo/seo-columns.php';
 
 // jQuery to footer ==========================================================================
 function remove_head_scripts()

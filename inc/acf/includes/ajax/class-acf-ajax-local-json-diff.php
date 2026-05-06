@@ -1,4 +1,13 @@
 <?php
+/**
+ * @package ACF
+ * @author  WP Engine
+ *
+ * © 2026 Advanced Custom Fields (ACF®). All rights reserved.
+ * "ACF" is a trademark of WP Engine.
+ * Licensed under the GNU General Public License v2 or later.
+ * https://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
@@ -34,7 +43,7 @@ if ( ! class_exists( 'ACF_Ajax_Local_JSON_Diff' ) ) :
 		public function get_response( $request ) {
 			// Bail early if the current user can't access the ACF admin.
 			if ( ! acf_current_user_can_admin() ) {
-				return new WP_Error( 'acf_not_allowed', __( 'Sorry, you are not allowed to do that.', 'acf' ), array( 'status' => 403 ) );
+				return new WP_Error( 'acf_not_allowed', __( 'Sorry, you do not have permission to do that.', 'acf' ), array( 'status' => 403 ) );
 			}
 
 			$json = array();

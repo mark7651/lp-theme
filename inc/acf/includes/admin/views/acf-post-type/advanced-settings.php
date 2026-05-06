@@ -1,4 +1,13 @@
 <?php
+/**
+ * @package ACF
+ * @author  WP Engine
+ *
+ * © 2026 Advanced Custom Fields (ACF®). All rights reserved.
+ * "ACF" is a trademark of WP Engine.
+ * Licensed under the GNU General Public License v2 or later.
+ * https://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 global $acf_post_type;
 
@@ -17,21 +26,31 @@ foreach ( acf_get_combined_post_type_settings_tabs() as $tab_key => $tab_label )
 
 	switch ( $tab_key ) {
 		case 'general':
+			// Editor placed after Title for visual consistency with the editor layout.
+			// Notes follows Editor as its sub-feature.
+			// With CSS Grid vertical flow (4 rows, 3 columns), Notes appears below Editor.
 			$acf_available_supports = array(
 				'title'           => __( 'Title', 'acf' ),
-				'author'          => __( 'Author', 'acf' ),
-				'comments'        => __( 'Comments', 'acf' ),
-				'trackbacks'      => __( 'Trackbacks', 'acf' ),
 				'editor'          => __( 'Editor', 'acf' ),
-				'excerpt'         => __( 'Excerpt', 'acf' ),
-				'revisions'       => __( 'Revisions', 'acf' ),
-				'page-attributes' => __( 'Page Attributes', 'acf' ),
+				'notes'           => __( 'Notes', 'acf' ),
 				'thumbnail'       => __( 'Featured Image', 'acf' ),
+				'author'          => __( 'Author', 'acf' ),
+				'trackbacks'      => __( 'Trackbacks', 'acf' ),
+				'revisions'       => __( 'Revisions', 'acf' ),
 				'custom-fields'   => __( 'Custom Fields', 'acf' ),
+				'comments'        => __( 'Comments', 'acf' ),
+				'excerpt'         => __( 'Excerpt', 'acf' ),
+				'page-attributes' => __( 'Page Attributes', 'acf' ),
 				'post-formats'    => __( 'Post Formats', 'acf' ),
 			);
 			$acf_available_supports = apply_filters( 'acf/post_type/available_supports', $acf_available_supports, $acf_post_type );
 			$acf_selected_supports  = is_array( $acf_post_type['supports'] ) ? $acf_post_type['supports'] : array();
+
+			// Notes should be disabled if editor is not selected.
+			$acf_supports_disabled = array();
+			if ( ! in_array( 'editor', $acf_selected_supports, true ) ) {
+				$acf_supports_disabled[] = 'notes';
+			}
 
 			acf_render_field_wrap(
 				array(
@@ -43,6 +62,7 @@ foreach ( acf_get_combined_post_type_settings_tabs() as $tab_key => $tab_label )
 					'prefix'                    => 'acf_post_type',
 					'value'                     => array_unique( array_filter( $acf_selected_supports ) ),
 					'choices'                   => $acf_available_supports,
+					'disabled'                  => $acf_supports_disabled,
 					'allow_custom'              => true,
 					'class'                     => 'acf_post_type_supports',
 					'custom_choice_button_text' => __( 'Add Custom', 'acf' ),
@@ -838,24 +858,39 @@ foreach ( acf_get_combined_post_type_settings_tabs() as $tab_key => $tab_label )
 				'field'
 			);
 
-			acf_render_field_wrap(
-				array(
-					'type'         => 'text',
-					'name'         => 'register_meta_box_cb',
-					'key'          => 'register_meta_box_cb',
-					'prefix'       => 'acf_post_type',
-					'value'        => $acf_post_type['register_meta_box_cb'],
-					'label'        => __( 'Custom Meta Box Callback', 'acf' ),
-					'instructions' => __( 'A PHP function name to be called when setting up the meta boxes for the edit screen.', 'acf' ),
-					'conditions'   => array(
-						'field'    => 'show_ui',
-						'operator' => '==',
-						'value'    => '1',
+			$acf_enable_meta_box_cb_edit  = acf_get_setting( 'enable_meta_box_cb_edit' );
+			$acf_meta_box_cb_instructions = __( 'A PHP function name to be called when setting up the meta boxes for the edit screen. For security, this callback will be executed in a special context without access to any superglobals like $_POST or $_GET.', 'acf' );
+
+			// Only show if user is allowed to update, or if it already has a value.
+			if ( $acf_enable_meta_box_cb_edit || ! empty( $acf_post_type['register_meta_box_cb'] ) ) {
+				if ( ! $acf_enable_meta_box_cb_edit ) {
+					if ( is_multisite() ) {
+						$acf_meta_box_cb_instructions .= ' ' . __( 'By default only super admin users can edit this setting.', 'acf' );
+					} else {
+						$acf_meta_box_cb_instructions .= ' ' . __( 'By default only admin users can edit this setting.', 'acf' );
+					}
+				}
+
+				acf_render_field_wrap(
+					array(
+						'type'         => 'text',
+						'name'         => 'register_meta_box_cb',
+						'key'          => 'register_meta_box_cb',
+						'prefix'       => 'acf_post_type',
+						'value'        => $acf_post_type['register_meta_box_cb'],
+						'label'        => __( 'Custom Meta Box Callback', 'acf' ),
+						'instructions' => $acf_meta_box_cb_instructions,
+						'readonly'     => ! $acf_enable_meta_box_cb_edit,
+						'conditions'   => array(
+							'field'    => 'show_ui',
+							'operator' => '==',
+							'value'    => '1',
+						),
 					),
-				),
-				'div',
-				'field'
-			);
+					'div',
+					'field'
+				);
+			}
 
 			acf_render_field_wrap(
 				array(

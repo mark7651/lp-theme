@@ -4,8 +4,6 @@ if (! isset($content_width)) {
   $content_width = 1280; /* pixels */
 }
 
-add_theme_support('content-width', $content_width);
-
 if (! function_exists('lp_setup')) {
   function lp_setup()
   {
@@ -68,21 +66,18 @@ add_filter('widget_text', 'do_shortcode');
 if (!function_exists('get_style')) {
   function get_style($url)
   {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    $data = curl_exec($ch);
-    curl_close($ch);
-    return $data;
+    $response = wp_remote_get(esc_url_raw($url), array('timeout' => 10));
+    if (is_wp_error($response)) {
+      return '';
+    }
+    return wp_remote_retrieve_body($response);
   }
 }
 
-// compress css 
+// compress css
 if (!function_exists('compressCSS')) {
   function compressCSS($css)
   {
-    ob_start();
-
     $css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css);
     preg_match_all('/(\'[^\']*?\'|"[^"]*?")/ims', $css, $hit, PREG_PATTERN_ORDER);
     for ($i = 0; $i < count($hit[1]); $i++) {
@@ -103,7 +98,6 @@ if (!function_exists('compressCSS')) {
       $css = str_replace('##########' . $i . '##########', $hit[1][$i], $css);
     }
     return $css;
-    $css = ob_get_contents();
   }
 }
 
@@ -177,7 +171,7 @@ if (! function_exists('lptheme_register_required_plugins')) {
         'slug'               => 'wps-hide-login',
         'required'           => true,
         'version'            => '',
-        'force_activation'   => true,
+        'force_activation'   => false,
         'force_deactivation' => false,
         'external_url'       => '',
       ),
@@ -185,9 +179,9 @@ if (! function_exists('lptheme_register_required_plugins')) {
       array(
         'name'               => 'Upload Converter for WebP',
         'slug'               => 'upload-converter-webp',
-        'required'           => true,
+        'required'           => false,
         'version'            => '',
-        'force_activation'   => true,
+        'force_activation'   => false,
         'force_deactivation' => false,
         'external_url'       => '',
       ),
@@ -195,16 +189,16 @@ if (! function_exists('lptheme_register_required_plugins')) {
       array(
         'name'               => 'Cache Enabler',
         'slug'               => 'cache-enabler',
-        'required'           => true,
+        'required'           => false,
         'version'            => '',
-        'force_activation'   => true,
+        'force_activation'   => false,
         'force_deactivation' => true,
         'external_url'       => '',
       ),
       array(
         'name'               => 'Cyr to Lat enhanced',
         'slug'               => 'cyr3lat',
-        'required'           => true,
+        'required'           => false,
         'version'            => '',
         'force_activation'   => true,
         'force_deactivation' => false,
@@ -213,7 +207,7 @@ if (! function_exists('lptheme_register_required_plugins')) {
       array(
         'name'               => 'Safe SVG',
         'slug'               => 'safe-svg',
-        'required'           => true,
+        'required'           => false,
         'version'            => '',
         'force_activation'   => true,
         'force_deactivation' => false,
